@@ -3,7 +3,7 @@ QT          += core gui widgets
 TEMPLATE    = app
 CONFIG      += c++14
 
-TARGET      = OpenGLTesting
+TARGET      = BSplinePathing
 
 INCLUDEPATH +=  ./GSL
 
