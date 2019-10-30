@@ -15,6 +15,7 @@ SOURCES += main.cpp \
     GSL/vector3d.cpp \
     GSL/vector4d.cpp \
     GSL/gsl_math.cpp \
+    npc.cpp \
     renderwindow.cpp \
     shader.cpp \
     mainwindow.cpp \
@@ -47,7 +48,8 @@ HEADERS += \
     trianglesurface.h \
     input.h \
     visualobject.h \
-    camera.h
+    camera.h \
+    npc.h
 
 FORMS += \
     mainwindow.ui
