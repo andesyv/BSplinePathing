@@ -15,6 +15,7 @@ SOURCES += main.cpp \
     GSL/vector3d.cpp \
     GSL/vector4d.cpp \
     GSL/gsl_math.cpp \
+    bsplinecurve.cpp \
     npc.cpp \
     renderwindow.cpp \
     shader.cpp \
@@ -37,6 +38,7 @@ HEADERS += \
     GSL/vector4d.h \
     GSL/gsl_math.h \
     GSL/math_constants.h \
+    bsplinecurve.h \
     renderwindow.h \
     shader.h \
     mainwindow.h \
