@@ -3,6 +3,7 @@
 #include <queue>
 #include "visualobject.h"
 #include "gsl_math.h"
+#include "bsplinecurve.h"
 
 
 class BSplineCurve;
@@ -13,7 +14,7 @@ enum NPCevents {ENDPOINT_ARRIVED, ITEM_TAKEN, OBSTACLE_DETECTED, PLAYER_DETECTED
 class NPC : public VisualObject
 {
 public:
-    NPC(BSplineCurve& bsplinecurve, BSplineCurve& bsplinecurve2, int m = 3, gsl::Vector3D color = gsl::Vector3D{1.0, 0.0, 0.0});
+    NPC(BSplineCurve&& bsplinecurve, gsl::Vector3D color = gsl::Vector3D{1.0, 0.0, 0.0});
     void patrol();
     void learn();
     void update(float t=0.05f); //t ikke brukt i funksjonen
@@ -24,8 +25,7 @@ public:
 
 
 private:
-    BSplineCurve& bSplineCurve;
-    std::vector<float>& knots;
+    BSplineCurve bSplineCurve;
     void buildNewPath();
 };
 
