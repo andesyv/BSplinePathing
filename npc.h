@@ -20,13 +20,20 @@ public:
     void update(float t=0.05f); //t ikke brukt i funksjonen
     void initVertexBufferObjects();
 
+    bool debugLine = true;
     void draw() override;
     void init() override;
 
-
+    ~NPC() override;
 private:
-    BSplineCurve bSplineCurve;
-    void buildNewPath();
+    BSplineCurve curve;
+    int splineResolution = 50.f;
+    void updatePathVisual();
+
+    GLuint NPCVAO;
+    GLuint splineVAO;
+
+    GLuint NPCVBO, splineVBO;
 };
 
 #endif // NPC_H
