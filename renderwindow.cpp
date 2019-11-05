@@ -14,6 +14,7 @@
 
 #include "xyz.h"
 #include "trianglesurface.h"
+#include "bsplinecurve.h"
 
 RenderWindow::RenderWindow(const QSurfaceFormat &format, MainWindow *mainWindow)
     : mContext(nullptr), mInitialized(false), mMainWindow(mainWindow)
@@ -106,6 +107,39 @@ void RenderWindow::init()
     temp->init();
     mVisualObjects.push_back(temp);
 
+    glGenVertexArrays(1, &spline);
+    glBindVertexArray(spline);
+
+    BSplineCurve curveFunc{
+        std::vector<gsl::Vector3D>{
+            {0.f, 3.f, 0.f},
+            {2.f, -2.f, 0.f},
+            {3.f, -5.f, 0.f},
+            {5.f, 2.f, 0.f},
+            {7.f, 3.f, 0.f}
+        }
+    };
+
+    std::vector<Vertex> vertices;
+    vertices.reserve(splineResolution);
+    for (auto i{0}; i < splineResolution; ++i)
+    {
+        auto p = curveFunc(i * 1.f / splineResolution);
+        vertices.emplace_back(p.x, p.y, p.z, 0.f, 1.f, 0.f);
+    }
+
+    GLuint VBO;
+    glGenBuffers(1, &VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(Vertex), nullptr);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, false, sizeof(Vertex), (GLvoid*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+
+    glBindVertexArray(0);
+
     //********************** Set up camera **********************
     mCurrentCamera = new Camera();
     mCurrentCamera->setPosition(gsl::Vector3D(-1.f, -.5f, -2.f));
@@ -139,6 +173,16 @@ void RenderWindow::render()
         glUniformMatrix4fv( mMatrixUniform1, 1, GL_TRUE, mVisualObjects[1]->mMatrix.constData());
         glUniform1i(mTextureUniform, 1);
         mVisualObjects[1]->draw();
+
+        auto shader = mShaderProgram[0];
+        gsl::Matrix4x4 mMat{};
+        mMat.setToIdentity();
+        glUseProgram(shader->getProgram());
+        glUniformMatrix4fv(shader->mMatrixUniform, 1, GL_TRUE, mMat.constData());
+        glUniformMatrix4fv(shader->vMatrixUniform, 1, GL_TRUE, mCurrentCamera->mViewMatrix.constData());
+        glUniformMatrix4fv(shader->pMatrixUniform, 1, GL_TRUE, mCurrentCamera->mProjectionMatrix.constData());
+        glBindVertexArray(spline);
+        glDrawArrays(GL_LINE_STRIP, 0, splineResolution);
     }
 
     //Calculate framerate before

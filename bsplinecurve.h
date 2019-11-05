@@ -8,10 +8,10 @@
 class BSplineCurve
 {
 public:
-    // ikke alle disse funksjonene er nødvendige
-    BSplineCurve(std::vector<gsl::vec3> controlpoints, std::vector<float> knots, int degree=2);
-    gsl::vec3 evaluateBSpline(int my, float x);
-    int getMy(float x);
+    BSplineCurve(const std::vector<gsl::vec3> &controlpoints, int degree=2);
+    BSplineCurve(const std::vector<gsl::vec3> &controlpoints, std::vector<float> knots, int degree=2);
+    gsl::vec3 evaluateBSpline(int my, float x) const;
+    int getMy(float x) const;
     /**
      * Calculates knots for a bspline for a normal
      * bezier like distribution
@@ -20,10 +20,15 @@ public:
      */
     std::vector<float> calcKnots() const;
 
+    gsl::vec3 eval(float x) const;
+    gsl::vec3 operator()(float x) const;
+
     std::vector<gsl::vec3> c;       // control points
     // int n;                       //n = number of knots
-    std::vector<float> t;           // knots
     int d;                          // d = degree
+    std::vector<float> t;           // knots
+
+    ~BSplineCurve() = default;
 };
 
 #endif // BSPLINECURVE_H

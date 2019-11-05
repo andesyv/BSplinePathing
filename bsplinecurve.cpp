@@ -1,9 +1,29 @@
 #include "bsplinecurve.h"
 
-BSplineCurve::BSplineCurve(std::vector<gsl::vec3> controlpoints, std::vector<float> knots, int degree)
-    : c{controlpoints}, t{knots}, d{degree}
+BSplineCurve::BSplineCurve(const std::vector<gsl::vec3>& controlpoints, int degree)
+    :c{controlpoints}, d{degree}, t{calcKnots()}
 {
 
+}
+
+BSplineCurve::BSplineCurve(const std::vector<gsl::vec3>& controlpoints, std::vector<float> knots, int degree)
+    : c{controlpoints}, d{degree}, t{knots}
+{
+
+}
+
+gsl::vec3 BSplineCurve::eval(float x) const
+{
+    auto my = getMy(x);
+    if (my > -1)
+        return evaluateBSpline(my, x);
+
+    return {0.f, 0.f, 0.f};
+}
+
+gsl::vec3 BSplineCurve::operator()(float x) const
+{
+    return eval(x);
 }
 
 // Parametre inn:
@@ -11,7 +31,7 @@ BSplineCurve::BSplineCurve(std::vector<gsl::vec3> controlpoints, std::vector<flo
 // my - et tall slik at t[my] <= x < t[my+1]
 // Returverdi: et punkt på splinekurven
 // b,n,d,t er objektvariable i klassen BSplineCurve
-gsl::vec3 BSplineCurve::evaluateBSpline(int my, float x)
+gsl::vec3 BSplineCurve::evaluateBSpline(int my, float x) const
 {
     std::vector<gsl::vec3> a; // forutsetter da at n+d+1 <= 20
     a.resize(t.size() + d + 1);
@@ -30,7 +50,7 @@ gsl::vec3 BSplineCurve::evaluateBSpline(int my, float x)
     return a[0];
 }
 
-int BSplineCurve::getMy(float x)
+int BSplineCurve::getMy(float x) const
 {
     for (unsigned int i{0}; i < t.size() - 1; ++i)
         if (t[i] <= x && x < t[i + 1])

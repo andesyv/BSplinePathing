@@ -59,6 +59,8 @@ private:
     GLint mTextureUniform{-1};
 
     std::vector<VisualObject*> mVisualObjects;
+    GLuint spline;
+    int splineResolution = 50.f;
 
     Camera *mCurrentCamera{nullptr};
 
