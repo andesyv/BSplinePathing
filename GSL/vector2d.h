@@ -49,6 +49,7 @@ public:
     GLfloat x;
     GLfloat y;
 };
+typedef Vector2D vec2;
 
 } //namespace
 

@@ -27,6 +27,9 @@ namespace gsl
     Vector3D bezierCurve(std::vector<Vector3D> points, GLfloat t, unsigned long long degree = 3);
     Vector3D bSpline(const std::vector<Vector3D> &points, const std::vector<GLfloat> &t, GLfloat x, unsigned long long degree = 3);
 
+    Vector3D barCoord(const vec3 &p, const vec3 &a, const vec3 &b, const vec3 &c);
+    float crossScalar(const vec3& a, const vec3& b);
+
     //Basic vector directions
     Vector3D up();
     Vector3D right();
@@ -34,6 +37,7 @@ namespace gsl
     Vector3D one();
     Vector3D zero();
 
+    gsl::vec3 project(const gsl::vec3& a, const gsl::vec3& b);
     float distanceToPlane(const Vector3D &point, const Vector3D &normal, const Vector3D &pointInPlane);
     bool withinPlane(const Vector3D &point, Matrix4x4 &modelMatrix, Vector2D upright, Vector2D downleft);
 

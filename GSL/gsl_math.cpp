@@ -143,18 +143,20 @@ namespace gsl
 //        hvor x,y,z er koordinatene til point. Hvis resultatet er positivt er punktet på siden av plan-normalen.
 //        sqrt(A*A + B*B + C*C) vil være 1, hvis normalen er normalisert!
 
-        float D =
-                normal.x * pointInPlane.x +
-                normal.y * pointInPlane.y +
-                normal.z * pointInPlane.z;
+//        float D =
+//                normal.x * pointInPlane.x +
+//                normal.y * pointInPlane.y +
+//                normal.z * pointInPlane.z;
 
-        float distance =
-                normal.x * point.x +
-                normal.y * point.y +
-                normal.z * point.z -
-                D;
+//        float distance =
+//                normal.x * point.x +
+//                normal.y * point.y +
+//                normal.z * point.z -
+//                D;
 
-        return distance;
+//        return distance;
+
+        return project((point - pointInPlane), normal).length();
     }
 
     bool withinPlane(const Vector3D &point, Matrix4x4 &modelMatrix, Vector2D upright, Vector2D downleft)
@@ -180,4 +182,26 @@ namespace gsl
         else
             return false;
     }
+
+    Vector3D barCoord(const vec3 &p, const vec3 &a, const vec3 &b, const vec3 &c)
+    {
+        gsl::vec3 baryc{};
+        gsl::vec3 ab{b - a}, ac{c - a}, pa{a - p}, pb{b - p}, pc{c - p};
+        float areal = crossScalar(ab, ac);
+        baryc.x = crossScalar(pb, pc) / areal;
+        baryc.y = crossScalar(pc, pa) / areal;
+        baryc.z = 1.f - baryc.x - baryc.y;
+        return baryc;
+    }
+
+    float crossScalar(const vec3 &a, const vec3 &b)
+    {
+        return a.y * b.z - a.z * b.y - (a.x * b.z - a.z * b.x) + a.x * b.y - a.y * b.x;
+    }
+
+    vec3 project(const vec3 &a, const vec3 &b)
+    {
+        return ((b * a) / (b * b)) * b;
+    }
+
 } //namespace

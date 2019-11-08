@@ -14,3 +14,13 @@ VisualObject::~VisualObject()
 void VisualObject::init()
 {
 }
+
+void VisualObject::move(float deltaTime)
+{
+
+}
+
+void VisualObject::update(float time)
+{
+
+}

@@ -34,6 +34,11 @@ public:
 
     void checkForGLerrors();
 
+    static std::vector<gsl::Vector3D> mapToGrid(const std::vector<gsl::Vector3D> &points, int xGrid, int zGrid, gsl::Vector3D min, gsl::Vector3D max);
+    static float length(const gsl::Vector3D &a, const gsl::Vector3D &b);
+
+
+    void moveBall(float deltaTime);
 private slots:
     void render();
 
@@ -59,12 +64,21 @@ private:
     GLint mTextureUniform{-1};
 
     std::vector<VisualObject*> mVisualObjects;
+    std::vector<Vertex> mTerrainVertices;
+
+    std::vector<Triangle> mTerrainTriangles;
+    GLuint mTerrainVAO;
+
+    std::pair<bool, gsl::vec3> isColliding(VisualObject *ball, float ballRadius);
+    Triangle* getBallToPlaneTriangle(gsl::vec3 ballPos);
     GLuint spline;
     int splineResolution = 50.f;
 
     Camera *mCurrentCamera{nullptr};
 
     bool mWireframe{false};
+
+    float mSimulationTime;
 
     Input mInput;
     float mCameraSpeed{0.05f};

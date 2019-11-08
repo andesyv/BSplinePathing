@@ -93,6 +93,8 @@ public:
     GLfloat w;
 };
 
+typedef Vector4D vec4;
+
 } //namespace
 
 #endif // VECTOR4D_H

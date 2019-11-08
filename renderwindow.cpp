@@ -14,6 +14,9 @@
 
 #include "xyz.h"
 #include "trianglesurface.h"
+#include "octahedronball.h"
+
+#include "LAS/lasloader.h"
 #include "bsplinecurve.h"
 #include "npc.h"
 
@@ -80,9 +83,9 @@ void RenderWindow::init()
     //NB: hardcoded path to files! You have to change this if you change directories for the project.
     //Qt makes a build-folder besides the project folder. That is why we go down one directory
     // (out of the build-folder) and then up into the project folder.
-    mShaderProgram[0] = new Shader("../OpenGLTesting/plainvertex.vert", "../OpenGLTesting/plainfragment.frag");
+    mShaderProgram[0] = new Shader("../BSplinePathing/plainvertex.vert", "../BSplinePathing/plainfragment.frag");
     qDebug() << "Plain shader program id: " << mShaderProgram[0]->getProgram();
-    mShaderProgram[1] = new Shader("../OpenGLTesting/texturevertex.vert", "../OpenGLTesting/texturefragmet.frag");
+    mShaderProgram[1]= new Shader("../BSplinePathing/texturevertex.vert", "../BSplinePathing/texturefragmet.frag");
     qDebug() << "Texture shader program id: " << mShaderProgram[1]->getProgram();
 
     setupPlainShader(0);
@@ -90,7 +93,7 @@ void RenderWindow::init()
 
     //**********************  Texture stuff: **********************
     mTexture[0] = new Texture();
-    mTexture[1] = new Texture("../OpenGLTesting/Assets/hund.bmp");
+    mTexture[1] = new Texture("../BSplinePathing/Assets/hund.bmp");
 
     //Set the textures loaded to a texture unit
     glActiveTexture(GL_TEXTURE0);
@@ -108,6 +111,14 @@ void RenderWindow::init()
     temp->init();
     mVisualObjects.push_back(temp);
 
+    temp = new OctahedronBall{3};
+    temp->init();
+    temp->mMatrix.setPosition(0, 10.f, 0);
+    temp->startPos = temp->mMatrix.getPosition();
+    temp->mAcceleration = gsl::vec3{0.f, -9.81f, 0.f};
+    mVisualObjects.push_back(temp);
+
+
     BSplineCurve curveFunc{
         std::vector<gsl::Vector3D>{
             {0.f, 3.f, 0.f},
@@ -124,7 +135,109 @@ void RenderWindow::init()
 
     //********************** Set up camera **********************
     mCurrentCamera = new Camera();
-    mCurrentCamera->setPosition(gsl::Vector3D(-1.f, -.5f, -2.f));
+    mCurrentCamera->setPosition(gsl::Vector3D(-1.f, -.5f, -5.f));
+
+    //********************** Terrain Data **************************
+    gsl::LASLoader loader{"../TerrainData/Mountain.las"};
+
+    bool flipY = true;
+
+    gsl::Vector3D min{};
+    gsl::Vector3D max{};
+    std::vector<gsl::Vector3D> terrainPoints;
+
+    terrainPoints.reserve(loader.pointCount());
+    for (auto it = loader.begin(); it != loader.end(); it = it + 10)
+    {
+        terrainPoints.emplace_back(it->xNorm(), (flipY) ? 1.0 - it->zNorm() : it->zNorm(), it->yNorm());
+
+        min.x = (terrainPoints.back().x < min.x) ? terrainPoints.back().x : min.x;
+        min.y = (terrainPoints.back().y < min.y) ? terrainPoints.back().y : min.y;
+        min.z = (terrainPoints.back().z < min.z) ? terrainPoints.back().z : min.z;
+
+        max.x = (terrainPoints.back().x > max.x) ? terrainPoints.back().x : max.x;
+        max.y = (terrainPoints.back().y > max.y) ? terrainPoints.back().y : max.y;
+        max.z = (terrainPoints.back().z > max.z) ? terrainPoints.back().z : max.z;
+    }
+
+    int xGridSize{5}, zGridSize{5};
+    terrainPoints = mapToGrid(terrainPoints, xGridSize, zGridSize, min, max);
+    terrainPoints.shrink_to_fit();
+
+
+
+    mTerrainVertices.reserve(terrainPoints.size());
+    std::transform(terrainPoints.begin(), terrainPoints.end(), std::back_inserter(mTerrainVertices), [](const gsl::Vector3D& point){
+        return Vertex{(point - 0.5f) * 40.f, {0.18f, 0.33f, 0.8f}, {0, 0}};
+    });
+
+    std::cout << "Point count: " << mTerrainVertices.size() << std::endl;
+
+    // Create indices
+    mTerrainTriangles.reserve((xGridSize - 1) * (zGridSize - 1) * 2);
+    for (unsigned int z{0}, i{0}; z < zGridSize - 1; ++z, ++i)
+    {
+        for (unsigned int x{0}; x < xGridSize - 1; ++x, ++i)
+        {
+            mTerrainTriangles.push_back({{i, i + xGridSize, i + 1},
+                                        {
+                                            static_cast<int>(mTerrainTriangles.size()) + 1,
+                                            (z != 0) ? static_cast<int>(static_cast<int>(mTerrainTriangles.size()) - (xGridSize - 1) * 2 + 1) : -1,
+                                            (x != 0) ? static_cast<int>(mTerrainTriangles.size()) - 1 : -1
+                                        }
+                                        });
+
+            std::cout << "Added a triangle with index: " << mTerrainTriangles.back().index[0] << ", " << mTerrainTriangles.back().index[1]
+                      << ", " << mTerrainTriangles.back().index[2] << " and neighbours: " << mTerrainTriangles.back().neighbour[0]
+                      << ", " << mTerrainTriangles.back().neighbour[1] << ", " << mTerrainTriangles.back().neighbour[2] << std::endl;
+
+            mTerrainTriangles.push_back({{i + 1, i + xGridSize, i + 1 + xGridSize} ,
+                                        {
+                                            (z < zGridSize - 2) ? static_cast<int>(static_cast<int>(mTerrainTriangles.size()) + (zGridSize - 1) * 2 - 1) : -1,
+                                            (x < xGridSize - 2) ? static_cast<int>(mTerrainTriangles.size() + 1) : -1,
+                                            static_cast<int>(mTerrainTriangles.size()) - 1
+                                        }
+                                        });
+
+            std::cout << "Added a triangle with index: " << mTerrainTriangles.back().index[0] << ", " << mTerrainTriangles.back().index[1]
+                      << ", " << mTerrainTriangles.back().index[2] << " and neighbours: " << mTerrainTriangles.back().neighbour[0]
+                      << ", " << mTerrainTriangles.back().neighbour[1] << ", " << mTerrainTriangles.back().neighbour[2] << std::endl;
+        }
+    }
+
+    std::cout << "Triangle count: " << mTerrainTriangles.size() << std::endl;
+
+
+    glGenVertexArrays(1, &mTerrainVAO);
+    glBindVertexArray(mTerrainVAO);
+
+    GLuint terrainVBO, terrainEBO;
+    glGenBuffers(1, &terrainVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, terrainVBO);
+    glBufferData(GL_ARRAY_BUFFER, mTerrainVertices.size() * sizeof(Vertex), mTerrainVertices.data(), GL_STATIC_DRAW);
+
+
+    unsigned int *data = new unsigned int[mTerrainTriangles.size() * 3];
+    for (unsigned int i{0}; i < mTerrainTriangles.size(); ++i)
+        for (unsigned int j{0}; j < 3; ++j)
+            data[i * 3 + j] = mTerrainTriangles.at(i).index[j];
+
+    glGenBuffers(1, &terrainEBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, terrainEBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, mTerrainTriangles.size() * 3 * sizeof(unsigned int), data, GL_STATIC_DRAW);
+
+    delete[] data;
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(3 * sizeof(GLfloat)));
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(6 * sizeof(GLfloat)));
+    glEnableVertexAttribArray(2);
+
+    glBindVertexArray(0);
+
+    // glPointSize(10.f);
 }
 
 ///Called each frame - doing the rendering
@@ -134,6 +247,8 @@ void RenderWindow::render()
     handleInput();
 
     mCurrentCamera->update();
+
+    const float deltaTime = mTimeStart.nsecsElapsed() / 1000000000.f;
 
     mTimeStart.restart(); //restart FPS clock
     mContext->makeCurrent(this); //must be called every frame (every time mContext->swapBuffers is called)
@@ -149,6 +264,9 @@ void RenderWindow::render()
         glUniformMatrix4fv( mMatrixUniform0, 1, GL_TRUE, mVisualObjects[0]->mMatrix.constData());
         mVisualObjects[0]->draw();
 
+        glUseProgram(mShaderProgram[0]->getProgram());
+        moveBall(deltaTime);
+
         glUseProgram(mShaderProgram[1]->getProgram());
         glUniformMatrix4fv( vMatrixUniform1, 1, GL_TRUE, mCurrentCamera->mViewMatrix.constData());
         glUniformMatrix4fv( pMatrixUniform1, 1, GL_TRUE, mCurrentCamera->mProjectionMatrix.constData());
@@ -161,6 +279,22 @@ void RenderWindow::render()
         glUniformMatrix4fv( pMatrixUniform0, 1, GL_TRUE, mCurrentCamera->mProjectionMatrix.constData());
         glUniformMatrix4fv( mMatrixUniform0, 1, GL_TRUE, mVisualObjects[2]->mMatrix.constData());
         mVisualObjects[2]->draw();
+
+        glUseProgram(mShaderProgram[0]->getProgram());
+        glUniformMatrix4fv( vMatrixUniform0, 1, GL_TRUE, mCurrentCamera->mViewMatrix.constData());
+        glUniformMatrix4fv( pMatrixUniform0, 1, GL_TRUE, mCurrentCamera->mProjectionMatrix.constData());
+        glUniformMatrix4fv( mMatrixUniform0, 1, GL_TRUE, mVisualObjects[3]->mMatrix.constData());
+        mVisualObjects[3]->draw();
+
+        glUseProgram(mShaderProgram[0]->getProgram());
+        gsl::Matrix4x4 modelMat{};
+        modelMat.setToIdentity();
+        glUniformMatrix4fv(mShaderProgram[0]->vMatrixUniform, 1, GL_TRUE, mCurrentCamera->mViewMatrix.constData());
+        glUniformMatrix4fv( mShaderProgram[0]->pMatrixUniform, 1, GL_TRUE, mCurrentCamera->mProjectionMatrix.constData());
+        glUniformMatrix4fv( mShaderProgram[0]->mMatrixUniform, 1, GL_TRUE, modelMat.constData());
+        glBindVertexArray(mTerrainVAO);
+        // glDrawArrays(GL_POINTS, 0, mTerrainVertices.size());
+        glDrawElements(GL_TRIANGLES, mTerrainTriangles.size() * 3, GL_UNSIGNED_INT, 0);
     }
 
     //Calculate framerate before
@@ -177,6 +311,61 @@ void RenderWindow::render()
     mContext->swapBuffers(this);
 }
 
+std::vector<gsl::Vector3D> RenderWindow::mapToGrid(const std::vector<gsl::Vector3D>& points, int xGrid, int zGrid, gsl::Vector3D min, gsl::Vector3D max)
+{
+    std::vector<std::pair<float, unsigned int>> grid;
+    grid.resize(xGrid * zGrid);
+
+    for (auto point : points)
+    {
+        int closestIndex[2]{0, 0};
+        for (int z{0}; z < zGrid; ++z)
+        {
+            for (int x{0}; x < xGrid; ++x)
+            {
+                gsl::Vector3D gridPoint{
+                    x * ((max.x - min.x) / xGrid) + min.x,
+                    0,
+                    z * ((max.z - min.z) / zGrid) + min.z
+                };
+
+                gsl::Vector3D lastClosestPoint{
+                    closestIndex[0] * ((max.x - min.x) / xGrid) + min.x,
+                    0,
+                    closestIndex[1] * ((max.z - min.z) / zGrid) + min.z
+                };
+
+                if ((gsl::Vector3D{point.x, 0, point.z} - gridPoint).length() < (gsl::Vector3D{point.x, 0, point.z} - lastClosestPoint).length())
+                {
+                    closestIndex[0] = x;
+                    closestIndex[1] = z;
+                }
+            }
+        }
+
+        auto& p = grid.at(closestIndex[0] + closestIndex[1] * zGrid);
+        p.first += point.y;
+        ++p.second;
+    }
+
+    // convert pair into only first of pair
+    std::vector<gsl::Vector3D> outputs{};
+    outputs.reserve(grid.size());
+    for (int z{0}; z < zGrid; ++z)
+    {
+        for (int x{0}; x < xGrid; ++x)
+        {
+            auto &p = grid.at(x + z * zGrid);
+
+            outputs.emplace_back(x * ((max.x - min.x) / xGrid) + min.x,
+                                 (0 < p.second) ? p.first / static_cast<float>(p.second) : 0,
+                                 z * ((max.z - min.z) / zGrid) + min.z);
+        }
+    }
+
+    return outputs;
+}
+
 void RenderWindow::setupPlainShader(int shaderIndex)
 {
     mMatrixUniform0 = glGetUniformLocation( mShaderProgram[shaderIndex]->getProgram(), "mMatrix" );
@@ -190,6 +379,95 @@ void RenderWindow::setupTextureShader(int shaderIndex)
     vMatrixUniform1 = glGetUniformLocation( mShaderProgram[shaderIndex]->getProgram(), "vMatrix" );
     pMatrixUniform1 = glGetUniformLocation( mShaderProgram[shaderIndex]->getProgram(), "pMatrix" );
     mTextureUniform = glGetUniformLocation(mShaderProgram[shaderIndex]->getProgram(), "textureSampler");
+}
+
+void RenderWindow::moveBall(float deltaTime)
+{
+    auto& ball = *mVisualObjects[2];
+    ball.velocity += ball.mAcceleration * deltaTime;
+    auto pos = ball.mMatrix.getPosition() + ball.velocity * deltaTime;
+
+    auto hitResults = isColliding(&ball, 1.f);
+    if (hitResults.first)
+    {
+        ball.velocity -= gsl::project(ball.velocity, hitResults.second);
+        pos = ball.mMatrix.getPosition() + ball.velocity * deltaTime +
+                (gsl::project(-ball.mAcceleration, hitResults.second) + ball.mAcceleration) * std::pow(deltaTime, 2) * 0.5f;
+    }
+    else
+    {
+        pos = ball.mMatrix.getPosition() + ball.velocity * deltaTime;
+    }
+
+    ball.mMatrix.setPosition(pos.x, pos.y, pos.z);
+    // std::cout << "velocity: " << ball.velocity << std::endl;
+}
+
+std::pair<bool, gsl::vec3> RenderWindow::isColliding(VisualObject* ball, float ballRadius)
+{
+    auto* tri = getBallToPlaneTriangle(ball->mMatrix.getPosition());
+    if (tri != nullptr)
+    {
+        gsl::vec3 normal = (mTerrainVertices.at(tri->index[1]).get_xyz() - mTerrainVertices.at(tri->index[0]).get_xyz())
+                ^ (mTerrainVertices.at(tri->index[2]).get_xyz() - mTerrainVertices.at(tri->index[0]).get_xyz());
+        normal.normalize();
+        // std::cout << "Normal is: " << normal << std::endl;
+
+        auto toBall = gsl::project(ball->mMatrix.getPosition() - mTerrainVertices.at(tri->index[0]).get_xyz(), normal);
+
+        if (toBall.length() < ballRadius && 0 < toBall * normal)
+        {
+            // Calculate force
+            return {true, normal};
+        }
+    }
+    // ball->mAcceleration = gsl::vec3{0.f, -9.81, 0.f};
+    return {false, {0, 0, 0}};
+}
+
+Triangle *RenderWindow::getBallToPlaneTriangle(gsl::vec3 ballPos)
+{
+    if (mTerrainTriangles.empty())
+        return nullptr;
+
+    unsigned int index = 0;
+    auto* t = &mTerrainTriangles.at(index);
+    std::array<gsl::vec3, 3> triangle;
+    for (unsigned int i{0}; i < 3; ++i)
+    {
+        triangle.at(i) = mTerrainVertices.at(t->index[i]).get_xyz();
+        triangle.at(i).y = 0.f;
+    }
+
+    gsl::vec3 bCoords = gsl::barCoord(gsl::vec3{ballPos.x, 0.f, ballPos.z}, triangle.at(0), triangle.at(1), triangle.at(2));
+    unsigned int lastIndex = std::numeric_limits<unsigned int>::max();
+    while (!(0 <= bCoords.x && 0 <= bCoords.y && 0 <= bCoords.z))
+    {
+        unsigned int lowestIndex{0};
+        lowestIndex = (bCoords.y < bCoords.x) ? 1 : lowestIndex;
+        lowestIndex = (bCoords.z < bCoords.x) ? 2 : lowestIndex;
+
+        if (t->neighbour[lowestIndex] < 0)
+            return nullptr;
+
+        unsigned int nextIndex = t->neighbour[lowestIndex];
+        if (lastIndex == nextIndex)
+            return nullptr;
+
+        lastIndex = index;
+        index = nextIndex;
+
+        t = &mTerrainTriangles.at(index);
+        for (unsigned int i{0}; i < 3; ++i)
+        {
+            triangle.at(i) = mTerrainVertices.at(t->index[i]).get_xyz();
+            triangle.at(i).y = 0.f;
+        }
+
+        bCoords = gsl::barCoord(gsl::vec3{ballPos.x, 0.f, ballPos.z}, triangle.at(0), triangle.at(1), triangle.at(2));
+    }
+
+    return t;
 }
 
 //This function is called from Qt when window is exposed (shown)
@@ -317,6 +595,8 @@ void RenderWindow::setCameraSpeed(float value)
 
 void RenderWindow::handleInput()
 {
+    const float deltaTime = mTimeStart.nsecsElapsed() / 1000000000.f;
+
     //Camera
     mCurrentCamera->setSpeed(0.f);  //cancel last frame movement
     if(mInput.RMB)
@@ -333,7 +613,18 @@ void RenderWindow::handleInput()
             mCurrentCamera->updateHeigth(mCameraSpeed);
         if(mInput.E)
             mCurrentCamera->updateHeigth(-mCameraSpeed);
+
+        // mSimulationTime += deltaTime;
     }
+
+    if (mInput.LMB)
+    {
+        mVisualObjects[2]->mAcceleration = gsl::vec3{0.f, -9.81f, 0.f};
+        mVisualObjects[2]->velocity = gsl::vec3{0, 0, 0};
+        mVisualObjects[2]->mMatrix.setToIdentity();
+        mVisualObjects[2]->mMatrix.setPosition(0.f, 10.f, 0.f);
+    }
+        mSimulationTime -= deltaTime;
 }
 
 void RenderWindow::keyPressEvent(QKeyEvent *event)
