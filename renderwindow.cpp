@@ -17,6 +17,8 @@
 #include "octahedronball.h"
 
 #include "LAS/lasloader.h"
+#include "bsplinecurve.h"
+#include "npc.h"
 
 RenderWindow::RenderWindow(const QSurfaceFormat &format, MainWindow *mainWindow)
     : mContext(nullptr), mInitialized(false), mMainWindow(mainWindow)
@@ -81,9 +83,9 @@ void RenderWindow::init()
     //NB: hardcoded path to files! You have to change this if you change directories for the project.
     //Qt makes a build-folder besides the project folder. That is why we go down one directory
     // (out of the build-folder) and then up into the project folder.
-    mShaderProgram[0] = new Shader("../TerrainData/plainvertex.vert", "../TerrainData/plainfragment.frag");
+    mShaderProgram[0] = new Shader("../BSplinePathing/plainvertex.vert", "../BSplinePathing/plainfragment.frag");
     qDebug() << "Plain shader program id: " << mShaderProgram[0]->getProgram();
-    mShaderProgram[1]= new Shader("../TerrainData/texturevertex.vert", "../TerrainData/texturefragmet.frag");
+    mShaderProgram[1]= new Shader("../BSplinePathing/texturevertex.vert", "../BSplinePathing/texturefragmet.frag");
     qDebug() << "Texture shader program id: " << mShaderProgram[1]->getProgram();
 
     setupPlainShader(0);
@@ -91,7 +93,7 @@ void RenderWindow::init()
 
     //**********************  Texture stuff: **********************
     mTexture[0] = new Texture();
-    mTexture[1] = new Texture("../TerrainData/Assets/hund.bmp");
+    mTexture[1] = new Texture("../BSplinePathing/Assets/hund.bmp");
 
     //Set the textures loaded to a texture unit
     glActiveTexture(GL_TEXTURE0);
@@ -114,6 +116,21 @@ void RenderWindow::init()
     temp->mMatrix.setPosition(0, 10.f, 0);
     temp->startPos = temp->mMatrix.getPosition();
     temp->mAcceleration = gsl::vec3{0.f, -9.81f, 0.f};
+    mVisualObjects.push_back(temp);
+
+
+    BSplineCurve curveFunc{
+        std::vector<gsl::Vector3D>{
+            {0.f, 3.f, 0.f},
+            {2.f, -2.f, 0.f},
+            {3.f, -5.f, 0.f},
+            {5.f, 2.f, 0.f},
+            {7.f, 3.f, 0.f}
+        }
+    };
+
+    temp = new NPC{std::move(curveFunc)};
+    temp->init();
     mVisualObjects.push_back(temp);
 
     //********************** Set up camera **********************
@@ -247,11 +264,18 @@ void RenderWindow::render()
         glUniformMatrix4fv( mMatrixUniform0, 1, GL_TRUE, mVisualObjects[0]->mMatrix.constData());
         mVisualObjects[0]->draw();
 
+
         glUseProgram(mShaderProgram[0]->getProgram());
-
-
-
         moveBall(deltaTime);
+
+        glUseProgram(mShaderProgram[1]->getProgram());
+        glUniformMatrix4fv( vMatrixUniform1, 1, GL_TRUE, mCurrentCamera->mViewMatrix.constData());
+        glUniformMatrix4fv( pMatrixUniform1, 1, GL_TRUE, mCurrentCamera->mProjectionMatrix.constData());
+        glUniformMatrix4fv( mMatrixUniform1, 1, GL_TRUE, mVisualObjects[1]->mMatrix.constData());
+        glUniform1i(mTextureUniform, 1);
+        mVisualObjects[1]->draw();
+
+        glUseProgram(mShaderProgram[0]->getProgram());
         glUniformMatrix4fv( vMatrixUniform0, 1, GL_TRUE, mCurrentCamera->mViewMatrix.constData());
         glUniformMatrix4fv( pMatrixUniform0, 1, GL_TRUE, mCurrentCamera->mProjectionMatrix.constData());
         glUniformMatrix4fv( mMatrixUniform0, 1, GL_TRUE, mVisualObjects[2]->mMatrix.constData());

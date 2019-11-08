@@ -71,6 +71,8 @@ private:
 
     std::pair<bool, gsl::vec3> isColliding(VisualObject *ball, float ballRadius);
     Triangle* getBallToPlaneTriangle(gsl::vec3 ballPos);
+    GLuint spline;
+    int splineResolution = 50.f;
 
     Camera *mCurrentCamera{nullptr};
 

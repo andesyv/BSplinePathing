@@ -49,4 +49,3 @@ protected:
 
 };
 #endif // VISUALOBJECT_H
-

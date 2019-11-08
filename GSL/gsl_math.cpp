@@ -125,12 +125,12 @@ namespace gsl
         return x;
     }
 
-    Vector2D lerbD(GLfloat time, Vector2D a, Vector2D b)
+    Vector2D lerp2D(GLfloat time, Vector2D a, Vector2D b)
     {
         return (a * (1.f - time)) + (b * time);
     }
 
-    Vector3D lercD(GLfloat time, Vector3D a, Vector3D b)
+    Vector3D lerp3D(GLfloat time, Vector3D a, Vector3D b)
     {
         return (a * (1.f - time)) + (b * time);
     }
