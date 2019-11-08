@@ -45,6 +45,10 @@ private slots:
 private:
     void init();
     void setCameraSpeed(float value);
+    void initTerrain();
+    bool readTerrainData(std::string file);
+    void writeTerrainData(std::string file);
+    void constructTerrain();
 
     QOpenGLContext *mContext{nullptr};
     bool mInitialized{false};

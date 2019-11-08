@@ -17,6 +17,9 @@ struct Triangle
 
     unsigned int index[3];
     int neighbour[3];
+
+    friend std::ostream& operator<< (std::ostream& out, const Triangle& tri);
+    friend std::istream& operator>> (std::istream& in, Triangle& tri);
 };
 
 class VisualObject : public QOpenGLFunctions_4_1_Core {

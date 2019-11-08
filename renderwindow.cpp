@@ -138,106 +138,7 @@ void RenderWindow::init()
     mCurrentCamera->setPosition(gsl::Vector3D(-1.f, -.5f, -5.f));
 
     //********************** Terrain Data **************************
-    gsl::LASLoader loader{"../TerrainData/Mountain.las"};
-
-    bool flipY = true;
-
-    gsl::Vector3D min{};
-    gsl::Vector3D max{};
-    std::vector<gsl::Vector3D> terrainPoints;
-
-    terrainPoints.reserve(loader.pointCount());
-    for (auto it = loader.begin(); it != loader.end(); it = it + 10)
-    {
-        terrainPoints.emplace_back(it->xNorm(), (flipY) ? 1.0 - it->zNorm() : it->zNorm(), it->yNorm());
-
-        min.x = (terrainPoints.back().x < min.x) ? terrainPoints.back().x : min.x;
-        min.y = (terrainPoints.back().y < min.y) ? terrainPoints.back().y : min.y;
-        min.z = (terrainPoints.back().z < min.z) ? terrainPoints.back().z : min.z;
-
-        max.x = (terrainPoints.back().x > max.x) ? terrainPoints.back().x : max.x;
-        max.y = (terrainPoints.back().y > max.y) ? terrainPoints.back().y : max.y;
-        max.z = (terrainPoints.back().z > max.z) ? terrainPoints.back().z : max.z;
-    }
-
-    int xGridSize{5}, zGridSize{5};
-    terrainPoints = mapToGrid(terrainPoints, xGridSize, zGridSize, min, max);
-    terrainPoints.shrink_to_fit();
-
-
-
-    mTerrainVertices.reserve(terrainPoints.size());
-    std::transform(terrainPoints.begin(), terrainPoints.end(), std::back_inserter(mTerrainVertices), [](const gsl::Vector3D& point){
-        return Vertex{(point - 0.5f) * 40.f, {0.18f, 0.33f, 0.8f}, {0, 0}};
-    });
-
-    std::cout << "Point count: " << mTerrainVertices.size() << std::endl;
-
-    // Create indices
-    mTerrainTriangles.reserve((xGridSize - 1) * (zGridSize - 1) * 2);
-    for (unsigned int z{0}, i{0}; z < zGridSize - 1; ++z, ++i)
-    {
-        for (unsigned int x{0}; x < xGridSize - 1; ++x, ++i)
-        {
-            mTerrainTriangles.push_back({{i, i + xGridSize, i + 1},
-                                        {
-                                            static_cast<int>(mTerrainTriangles.size()) + 1,
-                                            (z != 0) ? static_cast<int>(static_cast<int>(mTerrainTriangles.size()) - (xGridSize - 1) * 2 + 1) : -1,
-                                            (x != 0) ? static_cast<int>(mTerrainTriangles.size()) - 1 : -1
-                                        }
-                                        });
-
-            std::cout << "Added a triangle with index: " << mTerrainTriangles.back().index[0] << ", " << mTerrainTriangles.back().index[1]
-                      << ", " << mTerrainTriangles.back().index[2] << " and neighbours: " << mTerrainTriangles.back().neighbour[0]
-                      << ", " << mTerrainTriangles.back().neighbour[1] << ", " << mTerrainTriangles.back().neighbour[2] << std::endl;
-
-            mTerrainTriangles.push_back({{i + 1, i + xGridSize, i + 1 + xGridSize} ,
-                                        {
-                                            (z < zGridSize - 2) ? static_cast<int>(static_cast<int>(mTerrainTriangles.size()) + (zGridSize - 1) * 2 - 1) : -1,
-                                            (x < xGridSize - 2) ? static_cast<int>(mTerrainTriangles.size() + 1) : -1,
-                                            static_cast<int>(mTerrainTriangles.size()) - 1
-                                        }
-                                        });
-
-            std::cout << "Added a triangle with index: " << mTerrainTriangles.back().index[0] << ", " << mTerrainTriangles.back().index[1]
-                      << ", " << mTerrainTriangles.back().index[2] << " and neighbours: " << mTerrainTriangles.back().neighbour[0]
-                      << ", " << mTerrainTriangles.back().neighbour[1] << ", " << mTerrainTriangles.back().neighbour[2] << std::endl;
-        }
-    }
-
-    std::cout << "Triangle count: " << mTerrainTriangles.size() << std::endl;
-
-
-    glGenVertexArrays(1, &mTerrainVAO);
-    glBindVertexArray(mTerrainVAO);
-
-    GLuint terrainVBO, terrainEBO;
-    glGenBuffers(1, &terrainVBO);
-    glBindBuffer(GL_ARRAY_BUFFER, terrainVBO);
-    glBufferData(GL_ARRAY_BUFFER, mTerrainVertices.size() * sizeof(Vertex), mTerrainVertices.data(), GL_STATIC_DRAW);
-
-
-    unsigned int *data = new unsigned int[mTerrainTriangles.size() * 3];
-    for (unsigned int i{0}; i < mTerrainTriangles.size(); ++i)
-        for (unsigned int j{0}; j < 3; ++j)
-            data[i * 3 + j] = mTerrainTriangles.at(i).index[j];
-
-    glGenBuffers(1, &terrainEBO);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, terrainEBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, mTerrainTriangles.size() * 3 * sizeof(unsigned int), data, GL_STATIC_DRAW);
-
-    delete[] data;
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)0);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(3 * sizeof(GLfloat)));
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(6 * sizeof(GLfloat)));
-    glEnableVertexAttribArray(2);
-
-    glBindVertexArray(0);
-
-    // glPointSize(10.f);
+    initTerrain();
 }
 
 ///Called each frame - doing the rendering
@@ -591,6 +492,166 @@ void RenderWindow::setCameraSpeed(float value)
         mCameraSpeed = 0.01f;
     if (mCameraSpeed > 0.3f)
         mCameraSpeed = 0.3f;
+}
+
+void RenderWindow::initTerrain()
+{
+    if (!readTerrainData("terrainData.txt"))
+    {
+        constructTerrain();
+    }
+
+    std::cout << "Triangle count: " << mTerrainTriangles.size() << std::endl;
+
+    glGenVertexArrays(1, &mTerrainVAO);
+    glBindVertexArray(mTerrainVAO);
+
+    GLuint terrainVBO, terrainEBO;
+    glGenBuffers(1, &terrainVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, terrainVBO);
+    glBufferData(GL_ARRAY_BUFFER, mTerrainVertices.size() * sizeof(Vertex), mTerrainVertices.data(), GL_STATIC_DRAW);
+
+
+    unsigned int *data = new unsigned int[mTerrainTriangles.size() * 3];
+    for (unsigned int i{0}; i < mTerrainTriangles.size(); ++i)
+        for (unsigned int j{0}; j < 3; ++j)
+            data[i * 3 + j] = mTerrainTriangles.at(i).index[j];
+
+    glGenBuffers(1, &terrainEBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, terrainEBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, mTerrainTriangles.size() * 3 * sizeof(unsigned int), data, GL_STATIC_DRAW);
+
+    delete[] data;
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(3 * sizeof(GLfloat)));
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(6 * sizeof(GLfloat)));
+    glEnableVertexAttribArray(2);
+
+    glBindVertexArray(0);
+
+    // glPointSize(10.f);
+}
+
+bool RenderWindow::readTerrainData(std::string file)
+{
+    std::ifstream ifs{file};
+    if (ifs)
+    {
+        unsigned int n{0};
+        ifs >> n;
+        mTerrainVertices.reserve(n);
+        for (unsigned int i{0}; i < n; ++i)
+        {
+            Vertex v;
+            ifs >> v;
+            mTerrainVertices.push_back(v);
+        }
+
+        ifs >> n;
+        mTerrainTriangles.reserve(n);
+        for (unsigned int i{0}; i < n; ++i)
+        {
+            Triangle t;
+            ifs >> t;
+            mTerrainTriangles.push_back(t);
+        }
+
+        return true;
+    }
+    else
+        return false;
+}
+
+void RenderWindow::writeTerrainData(std::string file)
+{
+    std::ofstream ofs{file};
+    if (ofs)
+    {
+        std::size_t n{mTerrainVertices.size()};
+        ofs << n << std::endl;
+        for (std::size_t i{0}; i < n; ++i)
+            ofs << mTerrainVertices.at(i) << std::endl;
+
+        n = mTerrainTriangles.size();
+        ofs << n << std::endl;
+        for (std::size_t i{0}; i < n; ++i)
+            ofs << mTerrainTriangles.at(i) << std::endl;
+    }
+}
+
+void RenderWindow::constructTerrain()
+{
+    gsl::LASLoader loader{"../BSplinePathing/Mountain.las"};
+
+    bool flipY = true;
+
+    gsl::Vector3D min{};
+    gsl::Vector3D max{};
+    std::vector<gsl::Vector3D> terrainPoints;
+
+    terrainPoints.reserve(loader.pointCount());
+    for (auto it = loader.begin(); it != loader.end(); it = it + 10)
+    {
+        terrainPoints.emplace_back(it->xNorm(), (flipY) ? 1.0 - it->zNorm() : it->zNorm(), it->yNorm());
+
+        min.x = (terrainPoints.back().x < min.x) ? terrainPoints.back().x : min.x;
+        min.y = (terrainPoints.back().y < min.y) ? terrainPoints.back().y : min.y;
+        min.z = (terrainPoints.back().z < min.z) ? terrainPoints.back().z : min.z;
+
+        max.x = (terrainPoints.back().x > max.x) ? terrainPoints.back().x : max.x;
+        max.y = (terrainPoints.back().y > max.y) ? terrainPoints.back().y : max.y;
+        max.z = (terrainPoints.back().z > max.z) ? terrainPoints.back().z : max.z;
+    }
+
+    int xGridSize{10}, zGridSize{10};
+    terrainPoints = mapToGrid(terrainPoints, xGridSize, zGridSize, min, max);
+    terrainPoints.shrink_to_fit();
+
+
+
+    mTerrainVertices.reserve(terrainPoints.size());
+    std::transform(terrainPoints.begin(), terrainPoints.end(), std::back_inserter(mTerrainVertices), [](const gsl::Vector3D& point){
+        return Vertex{(point - 0.5f) * 40.f, {0.18f, 0.33f, 0.8f}, {0, 0}};
+    });
+
+    std::cout << "Point count: " << mTerrainVertices.size() << std::endl;
+
+    // Create indices
+    mTerrainTriangles.reserve((xGridSize - 1) * (zGridSize - 1) * 2);
+    for (unsigned int z{0}, i{0}; z < zGridSize - 1; ++z, ++i)
+    {
+        for (unsigned int x{0}; x < xGridSize - 1; ++x, ++i)
+        {
+            mTerrainTriangles.push_back({{i, i + xGridSize, i + 1},
+                                        {
+                                            static_cast<int>(mTerrainTriangles.size()) + 1,
+                                            (z != 0) ? static_cast<int>(static_cast<int>(mTerrainTriangles.size()) - (xGridSize - 1) * 2 + 1) : -1,
+                                            (x != 0) ? static_cast<int>(mTerrainTriangles.size()) - 1 : -1
+                                        }
+                                        });
+
+            std::cout << "Added a triangle with index: " << mTerrainTriangles.back().index[0] << ", " << mTerrainTriangles.back().index[1]
+                      << ", " << mTerrainTriangles.back().index[2] << " and neighbours: " << mTerrainTriangles.back().neighbour[0]
+                      << ", " << mTerrainTriangles.back().neighbour[1] << ", " << mTerrainTriangles.back().neighbour[2] << std::endl;
+
+            mTerrainTriangles.push_back({{i + 1, i + xGridSize, i + 1 + xGridSize} ,
+                                        {
+                                            (z < zGridSize - 2) ? static_cast<int>(static_cast<int>(mTerrainTriangles.size()) + (zGridSize - 1) * 2 - 1) : -1,
+                                            (x < xGridSize - 2) ? static_cast<int>(mTerrainTriangles.size() + 1) : -1,
+                                            static_cast<int>(mTerrainTriangles.size()) - 1
+                                        }
+                                        });
+
+            std::cout << "Added a triangle with index: " << mTerrainTriangles.back().index[0] << ", " << mTerrainTriangles.back().index[1]
+                      << ", " << mTerrainTriangles.back().index[2] << " and neighbours: " << mTerrainTriangles.back().neighbour[0]
+                      << ", " << mTerrainTriangles.back().neighbour[1] << ", " << mTerrainTriangles.back().neighbour[2] << std::endl;
+        }
+    }
+
+    writeTerrainData("terrainData.txt");
 }
 
 void RenderWindow::handleInput()
