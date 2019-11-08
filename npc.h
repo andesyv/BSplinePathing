@@ -17,6 +17,7 @@ public:
     NPC(BSplineCurve&& bsplinecurve, gsl::Vector3D color = gsl::Vector3D{1.0, 0.0, 0.0});
     void patrol();
     void learn();
+    void readFile(std::string filename);
     void update(float t=0.05f); //t ikke brukt i funksjonen
     void initVertexBufferObjects();
 

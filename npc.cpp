@@ -6,6 +6,29 @@ NPC::NPC(BSplineCurve &&bsplinecurve, gsl::Vector3D color)
     mMatrix.setToIdentity();
 }
 
+void NPC::readFile(std::string filename) {
+    std::ifstream inn;
+    inn.open(filename.c_str());
+
+    if (inn.is_open())
+    {
+        unsigned long n;
+        Vertex vertex;
+        inn >> n;
+        mVertices.reserve(n);
+        for (unsigned long i=0; i<n; i++)
+        {
+            inn >> vertex;
+            mVertices.push_back(vertex);
+        }
+        inn.close();
+    }
+    else
+    {
+        qDebug() << "Error: " << filename.c_str() << " could not be opened!";
+    }
+}
+
 void NPC::draw()
 {
     if (debugLine)
@@ -15,6 +38,9 @@ void NPC::draw()
         glDrawArrays(GL_LINE_STRIP, 0, splineResolution);
         glDrawArrays(GL_POINTS, splineResolution, curve.getCs().size());
     }
+
+    glBindVertexArray(NPCVAO);
+    glDrawArrays(GL_TRIANGLES, 0, mVertices.size());
 }
 
 void NPC::init()
@@ -38,12 +64,21 @@ void NPC::init()
 
 
     // NPC
+    readFile("../BSplinePathing/Assets/ball.txt");
+
     glGenVertexArrays(1, &NPCVAO);
     glBindVertexArray(NPCVAO);
 
     glGenBuffers(1, &NPCVBO);
     glBindBuffer(GL_ARRAY_BUFFER, NPCVBO);
-    glBufferData(GL_ARRAY_BUFFER, 0, nullptr, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, mVertices.size() * sizeof (Vertex), mVertices.data(), GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(Vertex), (GLvoid*)(0));
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 3, GL_FLOAT, false, sizeof(Vertex), (GLvoid*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 2, GL_FLOAT, false, sizeof(Vertex), (GLvoid*)(6 * sizeof(float)));
+    glEnableVertexAttribArray(2);
 
     glBindVertexArray(0);
 }
