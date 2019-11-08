@@ -606,7 +606,7 @@ void RenderWindow::constructTerrain()
         max.z = (terrainPoints.back().z > max.z) ? terrainPoints.back().z : max.z;
     }
 
-    int xGridSize{10}, zGridSize{10};
+    int xGridSize{50}, zGridSize{50};
     terrainPoints = mapToGrid(terrainPoints, xGridSize, zGridSize, min, max);
     terrainPoints.shrink_to_fit();
 
@@ -614,7 +614,7 @@ void RenderWindow::constructTerrain()
 
     mTerrainVertices.reserve(terrainPoints.size());
     std::transform(terrainPoints.begin(), terrainPoints.end(), std::back_inserter(mTerrainVertices), [](const gsl::Vector3D& point){
-        return Vertex{(point - 0.5f) * 40.f, {0.18f, 0.33f, 0.8f}, {0, 0}};
+        return Vertex{(point - 0.5f).multComp(gsl::vec3{40.f, 10.f, 40.f}), {0.18f, 0.33f, 0.8f}, {0, 0}};
     });
 
     std::cout << "Point count: " << mTerrainVertices.size() << std::endl;

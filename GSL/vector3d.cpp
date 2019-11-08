@@ -155,6 +155,11 @@ namespace gsl
         return ((v1.getX() * v2.getX()) + (v1.getY() * v2.getY()) + (v1.getZ() * v2.getZ()));
     }
 
+    vec3 Vector3D::multComp(const vec3 &v) const
+    {
+        return {x * v.x, y * v.y, z * v.z};
+    }
+
 
     void Vector3D::rotateX(GLfloat angle)
     {

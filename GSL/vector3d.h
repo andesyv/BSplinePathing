@@ -42,6 +42,7 @@ public:
     Vector3D normalized();
     static Vector3D cross(const Vector3D &v1, const Vector3D &v2);
     static GLfloat dot(const Vector3D &v1, const Vector3D &v2);
+    gsl::vec3 multComp(const gsl::vec3& v) const;
 
     void rotateX(GLfloat angle);
     void rotateY(GLfloat angle);
