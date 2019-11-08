@@ -28,6 +28,7 @@ public:
     virtual ~VisualObject();
     virtual void init();
     virtual void draw()=0;
+    virtual void draw(Shader* shader);
 
     virtual void move(float deltaTime);
     virtual void update(float time);

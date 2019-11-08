@@ -165,8 +165,8 @@ void RenderWindow::render()
         glUniformMatrix4fv( mMatrixUniform0, 1, GL_TRUE, mVisualObjects[0]->mMatrix.constData());
         mVisualObjects[0]->draw();
 
-        glUseProgram(mShaderProgram[0]->getProgram());
-        moveBall(deltaTime);
+//        glUseProgram(mShaderProgram[0]->getProgram());
+//        // moveBall(deltaTime);
 
         glUseProgram(mShaderProgram[1]->getProgram());
         glUniformMatrix4fv( vMatrixUniform1, 1, GL_TRUE, mCurrentCamera->mViewMatrix.constData());
@@ -181,11 +181,16 @@ void RenderWindow::render()
         glUniformMatrix4fv( mMatrixUniform0, 1, GL_TRUE, mVisualObjects[2]->mMatrix.constData());
         mVisualObjects[2]->draw();
 
+        if (auto npc = dynamic_cast<NPC*>(mVisualObjects[3]))
+        {
+            npc->patrol(deltaTime * 0.1f);
+        }
+
         glUseProgram(mShaderProgram[0]->getProgram());
         glUniformMatrix4fv( vMatrixUniform0, 1, GL_TRUE, mCurrentCamera->mViewMatrix.constData());
         glUniformMatrix4fv( pMatrixUniform0, 1, GL_TRUE, mCurrentCamera->mProjectionMatrix.constData());
         glUniformMatrix4fv( mMatrixUniform0, 1, GL_TRUE, mVisualObjects[3]->mMatrix.constData());
-        mVisualObjects[3]->draw();
+        mVisualObjects[3]->draw(mShaderProgram[0]);
 
         glUseProgram(mShaderProgram[0]->getProgram());
         gsl::Matrix4x4 modelMat{};

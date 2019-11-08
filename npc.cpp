@@ -29,6 +29,19 @@ void NPC::readFile(std::string filename) {
     }
 }
 
+void NPC::patrol(float deltaT)
+{
+    t += deltaT * dir;
+    if (0.98f <= t || t < 0.f)
+    {
+        t = gsl::clamp(t, 0.f, 1.f);
+        dir = -dir;
+    }
+
+    auto p = curve(t);
+    mMatrix.setPosition(p.x, p.y, p.z);
+}
+
 void NPC::draw()
 {
     if (debugLine)
@@ -39,6 +52,24 @@ void NPC::draw()
         glDrawArrays(GL_POINTS, splineResolution, curve.getCs().size());
     }
 
+    glBindVertexArray(NPCVAO);
+    glDrawArrays(GL_TRIANGLES, 0, mVertices.size());
+}
+
+void NPC::draw(Shader *shader)
+{
+    if (debugLine)
+    {
+        gsl::Matrix4x4 mat{};
+        mat.setToIdentity();
+        glUniformMatrix4fv(glGetUniformLocation(shader->getProgram(), "mMatrix"), 1, GL_TRUE, mat.constData());
+        glPointSize(3.f);
+        glBindVertexArray(splineVAO);
+        glDrawArrays(GL_LINE_STRIP, 0, splineResolution);
+        glDrawArrays(GL_POINTS, splineResolution, curve.getCs().size());
+    }
+
+    glUniformMatrix4fv(glGetUniformLocation(shader->getProgram(), "mMatrix"), 1, GL_TRUE, mMatrix.constData());
     glBindVertexArray(NPCVAO);
     glDrawArrays(GL_TRIANGLES, 0, mVertices.size());
 }

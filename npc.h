@@ -15,14 +15,16 @@ class NPC : public VisualObject
 {
 public:
     NPC(BSplineCurve&& bsplinecurve, gsl::Vector3D color = gsl::Vector3D{1.0, 0.0, 0.0});
-    void patrol();
     void learn();
     void readFile(std::string filename);
     // void update(float t=0.05f); //t ikke brukt i funksjonen
     void initVertexBufferObjects();
 
+    void patrol(float deltaT);
+
     bool debugLine = true;
     void draw() override;
+    void draw(Shader *shader) override;
     void init() override;
 
     BSplineCurve curve;
@@ -32,6 +34,8 @@ public:
     ~NPC() override;
 private:
     int splineResolution = 50.f;
+    float t{0};
+    int dir{1};
 
     GLuint NPCVAO;
     GLuint splineVAO;

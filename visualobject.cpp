@@ -15,6 +15,11 @@ void VisualObject::init()
 {
 }
 
+void VisualObject::draw(Shader *shader)
+{
+
+}
+
 void VisualObject::move(float deltaTime)
 {
 
