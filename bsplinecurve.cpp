@@ -26,6 +26,26 @@ gsl::vec3 BSplineCurve::operator()(float x) const
     return eval(x);
 }
 
+std::vector<gsl::vec3> BSplineCurve::getCs() const
+{
+    return c;
+}
+
+gsl::vec3 &BSplineCurve::atC(unsigned int index)
+{
+    return c.at(index);
+}
+
+void BSplineCurve::setCs(const std::vector<gsl::vec3> &cs)
+{
+    std::size_t oldSize{c.size()};
+
+    c = cs;
+
+    if (autoCalcKnots && cs.size() != oldSize)
+       t = calcKnots();
+}
+
 // Parametre inn:
 // x - en parameterverdi på skjøtvektor
 // my - et tall slik at t[my] <= x < t[my+1]

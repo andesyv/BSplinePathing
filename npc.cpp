@@ -13,7 +13,7 @@ void NPC::draw()
         glPointSize(3.f);
         glBindVertexArray(splineVAO);
         glDrawArrays(GL_LINE_STRIP, 0, splineResolution);
-        glDrawArrays(GL_POINTS, splineResolution, curve.c.size());
+        glDrawArrays(GL_POINTS, splineResolution, curve.getCs().size());
     }
 }
 
@@ -50,19 +50,9 @@ void NPC::init()
 
 void NPC::updatePathVisual()
 {
-    // Temp
-    curve.c = {
-        {0.f, 3.f, 0.f},
-        {2.f, -2.f, 0.f},
-        {3.f, -5.f, 0.f},
-        {5.f, 2.f, 0.f},
-        {7.f, 3.f, 0.f}
-    };
-    curve.t = curve.calcKnots();
-
-
     std::vector<Vertex> vertices;
-    vertices.reserve(splineResolution + curve.c.size());
+    auto c = curve.getCs();
+    vertices.reserve(splineResolution + c.size());
 
     for (int i{0}; i < splineResolution; ++i)
     {
@@ -71,9 +61,9 @@ void NPC::updatePathVisual()
     }
 
     // Control points
-    for (int i{0}; i < curve.c.size(); ++i)
+    for (int i{0}; i < c.size(); ++i)
     {
-        auto p = curve.c.at(i);
+        auto p = c.at(i);
         vertices.emplace_back(p.x, p.y, p.z, 1.f, 0.f, 0.f);
     }
 

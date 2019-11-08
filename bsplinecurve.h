@@ -23,10 +23,21 @@ public:
     gsl::vec3 eval(float x) const;
     gsl::vec3 operator()(float x) const;
 
+
+    std::vector<gsl::vec3> getCs() const;
+    gsl::vec3& atC(unsigned int index);
+    void setCs(const std::vector<gsl::vec3>& cs);
+
+
+    // Member variables
+private:
     std::vector<gsl::vec3> c;       // control points
-    // int n;                       //n = number of knots
+
+public:
     int d;                          // d = degree
     std::vector<float> t;           // knots
+    bool autoCalcKnots = true;
+
 
     ~BSplineCurve() = default;
 };

@@ -24,11 +24,13 @@ public:
     void draw() override;
     void init() override;
 
+    BSplineCurve curve;
+
+    void updatePathVisual();
+
     ~NPC() override;
 private:
-    BSplineCurve curve;
     int splineResolution = 50.f;
-    void updatePathVisual();
 
     GLuint NPCVAO;
     GLuint splineVAO;
