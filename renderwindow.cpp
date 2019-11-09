@@ -649,7 +649,7 @@ void RenderWindow::constructTerrain()
 
     mTerrainVertices.reserve(terrainPoints.size());
     std::transform(terrainPoints.begin(), terrainPoints.end(), std::back_inserter(mTerrainVertices), [](const gsl::Vector3D& point){
-        return Vertex{(point - 0.5f).multComp(gsl::vec3{40.f, 10.f, 40.f}), {0.18f, 0.33f, 0.8f}, {0, 0}};
+        return Vertex{(point - 0.5f).multComp(gsl::vec3{40.f, 10.f, 40.f}), {point.x, 0.33f, point.z}, {0, 0}};
     });
 
     std::cout << "Point count: " << mTerrainVertices.size() << std::endl;
@@ -668,9 +668,9 @@ void RenderWindow::constructTerrain()
                                         }
                                         });
 
-            std::cout << "Added a triangle with index: " << mTerrainTriangles.back().index[0] << ", " << mTerrainTriangles.back().index[1]
-                      << ", " << mTerrainTriangles.back().index[2] << " and neighbours: " << mTerrainTriangles.back().neighbour[0]
-                      << ", " << mTerrainTriangles.back().neighbour[1] << ", " << mTerrainTriangles.back().neighbour[2] << std::endl;
+//            std::cout << "Added a triangle with index: " << mTerrainTriangles.back().index[0] << ", " << mTerrainTriangles.back().index[1]
+//                      << ", " << mTerrainTriangles.back().index[2] << " and neighbours: " << mTerrainTriangles.back().neighbour[0]
+//                      << ", " << mTerrainTriangles.back().neighbour[1] << ", " << mTerrainTriangles.back().neighbour[2] << std::endl;
 
             mTerrainTriangles.push_back({{i + 1, i + xGridSize, i + 1 + xGridSize} ,
                                         {
@@ -680,9 +680,9 @@ void RenderWindow::constructTerrain()
                                         }
                                         });
 
-            std::cout << "Added a triangle with index: " << mTerrainTriangles.back().index[0] << ", " << mTerrainTriangles.back().index[1]
-                      << ", " << mTerrainTriangles.back().index[2] << " and neighbours: " << mTerrainTriangles.back().neighbour[0]
-                      << ", " << mTerrainTriangles.back().neighbour[1] << ", " << mTerrainTriangles.back().neighbour[2] << std::endl;
+//            std::cout << "Added a triangle with index: " << mTerrainTriangles.back().index[0] << ", " << mTerrainTriangles.back().index[1]
+//                      << ", " << mTerrainTriangles.back().index[2] << " and neighbours: " << mTerrainTriangles.back().neighbour[0]
+//                      << ", " << mTerrainTriangles.back().neighbour[1] << ", " << mTerrainTriangles.back().neighbour[2] << std::endl;
         }
     }
 
