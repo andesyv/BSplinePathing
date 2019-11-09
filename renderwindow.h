@@ -41,6 +41,10 @@ public:
 
 
     void moveBall(float deltaTime);
+
+    Triangle* getTriangle(gsl::vec3 pos);
+    gsl::vec3 mapToTerrain(gsl::vec3 pos);
+
 private slots:
     void render();
 
@@ -77,7 +81,7 @@ private:
     GLuint mTerrainVAO;
 
     std::pair<bool, gsl::vec3> isColliding(VisualObject *ball, float ballRadius);
-    Triangle* getBallToPlaneTriangle(gsl::vec3 ballPos);
+
     GLuint spline;
     int splineResolution = 50.f;
 

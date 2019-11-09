@@ -42,7 +42,7 @@ public:
 
     std::string mName;
 
-    RenderWindow *mRenderWindow; //Just to be able to call checkForGLerrors()
+    RenderWindow *mRenderWindow{nullptr}; //Just to be able to call checkForGLerrors()
 
 protected:
     std::vector<Vertex> mVertices;

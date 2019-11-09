@@ -112,6 +112,9 @@ void RenderWindow::init()
     temp->init();
     mVisualObjects.push_back(temp);
 
+    //********************** Terrain Data **************************
+    initTerrain();
+
     temp = new OctahedronBall{3};
     temp->init();
     temp->mMatrix.setPosition(0, 10.f, 0);
@@ -133,6 +136,7 @@ void RenderWindow::init()
     temp = new NPC{std::move(curveFunc)};
     npc = dynamic_cast<NPC*>(temp);
     temp->init();
+    temp->mRenderWindow = this;
     mVisualObjects.push_back(temp);
 
 
@@ -143,6 +147,12 @@ void RenderWindow::init()
         {0.f, 0.f, 10.f},
         {5.f, 0.f, 7.f},
     };
+    for (auto &pos : positions)
+    {
+        pos = mapToTerrain(pos);
+        std:: cout << "pos is now: " << pos << std::endl;
+    }
+
     mTrophies.reserve(positions.size());
     for (const auto& pos : positions)
     {
@@ -157,9 +167,6 @@ void RenderWindow::init()
     //********************** Set up camera **********************
     mCurrentCamera = new Camera();
     mCurrentCamera->setPosition(gsl::Vector3D(-1.f, -.5f, -5.f));
-
-    //********************** Terrain Data **************************
-    initTerrain();
 }
 
 ///Called each frame - doing the rendering
@@ -341,7 +348,7 @@ void RenderWindow::moveBall(float deltaTime)
 
 std::pair<bool, gsl::vec3> RenderWindow::isColliding(VisualObject* ball, float ballRadius)
 {
-    auto* tri = getBallToPlaneTriangle(ball->mMatrix.getPosition());
+    auto* tri = getTriangle(ball->mMatrix.getPosition());
     if (tri != nullptr)
     {
         gsl::vec3 normal = (mTerrainVertices.at(tri->index[1]).get_xyz() - mTerrainVertices.at(tri->index[0]).get_xyz())
@@ -361,7 +368,7 @@ std::pair<bool, gsl::vec3> RenderWindow::isColliding(VisualObject* ball, float b
     return {false, {0, 0, 0}};
 }
 
-Triangle *RenderWindow::getBallToPlaneTriangle(gsl::vec3 ballPos)
+Triangle *RenderWindow::getTriangle(gsl::vec3 pos)
 {
     if (mTerrainTriangles.empty())
         return nullptr;
@@ -375,7 +382,7 @@ Triangle *RenderWindow::getBallToPlaneTriangle(gsl::vec3 ballPos)
         triangle.at(i).y = 0.f;
     }
 
-    gsl::vec3 bCoords = gsl::barCoord(gsl::vec3{ballPos.x, 0.f, ballPos.z}, triangle.at(0), triangle.at(1), triangle.at(2));
+    gsl::vec3 bCoords = gsl::barCoord(gsl::vec3{pos.x, 0.f, pos.z}, triangle.at(0), triangle.at(1), triangle.at(2));
     unsigned int lastIndex = std::numeric_limits<unsigned int>::max();
     while (!(0 <= bCoords.x && 0 <= bCoords.y && 0 <= bCoords.z))
     {
@@ -400,10 +407,64 @@ Triangle *RenderWindow::getBallToPlaneTriangle(gsl::vec3 ballPos)
             triangle.at(i).y = 0.f;
         }
 
-        bCoords = gsl::barCoord(gsl::vec3{ballPos.x, 0.f, ballPos.z}, triangle.at(0), triangle.at(1), triangle.at(2));
+        bCoords = gsl::barCoord(gsl::vec3{pos.x, 0.f, pos.z}, triangle.at(0), triangle.at(1), triangle.at(2));
     }
 
     return t;
+}
+
+gsl::vec3 RenderWindow::mapToTerrain(gsl::vec3 pos)
+{
+    if (mTerrainTriangles.empty())
+        return {};
+
+    unsigned int index = 0;
+    auto* t = &mTerrainTriangles.at(index);
+    gsl::vec3 output{0.f, 0.f, 0.f};
+    std::array<gsl::vec3, 3> triangle;
+    for (unsigned int i{0}; i < 3; ++i)
+    {
+        triangle.at(i) = mTerrainVertices.at(t->index[i]).get_xyz();
+        triangle.at(i).y = 0.f;
+    }
+
+    gsl::vec3 bCoords = gsl::barCoord(gsl::vec3{pos.x, 0.f, pos.z}, triangle.at(0), triangle.at(1), triangle.at(2));
+    unsigned int lastIndex = std::numeric_limits<unsigned int>::max();
+    while (!(0 <= bCoords.x && 0 <= bCoords.y && 0 <= bCoords.z))
+    {
+        unsigned int lowestIndex{0};
+        lowestIndex = (bCoords.y < bCoords.x) ? 1 : lowestIndex;
+        lowestIndex = (bCoords.z < bCoords.x) ? 2 : lowestIndex;
+
+        if (t->neighbour[lowestIndex] < 0)
+            return {};
+
+        unsigned int nextIndex = t->neighbour[lowestIndex];
+        if (lastIndex == nextIndex)
+            return {};
+
+        lastIndex = index;
+        index = nextIndex;
+
+        t = &mTerrainTriangles.at(index);
+        for (unsigned int i{0}; i < 3; ++i)
+        {
+            triangle.at(i) = mTerrainVertices.at(t->index[i]).get_xyz();
+            triangle.at(i).y = 0.f;
+        }
+
+        bCoords = gsl::barCoord(gsl::vec3{pos.x, 0.f, pos.z}, triangle.at(0), triangle.at(1), triangle.at(2));
+    }
+
+    if (t == nullptr)
+        return {};
+
+    output =
+            bCoords.x * mTerrainVertices[t->index[0]].get_xyz() +
+            bCoords.y * mTerrainVertices[t->index[1]].get_xyz() +
+            bCoords.z * mTerrainVertices[t->index[2]].get_xyz();
+
+    return output;
 }
 
 //This function is called from Qt when window is exposed (shown)

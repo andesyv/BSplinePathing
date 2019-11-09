@@ -1,4 +1,5 @@
 #include "npc.h"
+#include "renderwindow.h"
 
 NPC::NPC(BSplineCurve &&bsplinecurve, gsl::Vector3D color)
     : curve{std::move(bsplinecurve)}
@@ -125,6 +126,8 @@ void NPC::updatePathVisual()
     for (int i{0}; i < splineResolution; ++i)
     {
         auto p = curve(i * 1.f / splineResolution);
+        if (mRenderWindow != nullptr)
+            p = mRenderWindow->mapToTerrain(p);
         vertices.emplace_back(p.x, p.y, p.z, 0.f, 1.f, 0.f);
     }
 
