@@ -158,6 +158,8 @@ void OctahedronBall::init()
    glEnableVertexAttribArray(2);
 
    glBindVertexArray(0);
+
+   mInited = true;
 }
 
 //!

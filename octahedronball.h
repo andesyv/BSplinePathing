@@ -19,6 +19,7 @@ private:
     void oktaederUnitBall();
 public:
     OctahedronBall(int n=0);
+    OctahedronBall(const OctahedronBall& b) = default;
 
     void init() override;
     void draw() override;

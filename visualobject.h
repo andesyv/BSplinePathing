@@ -25,6 +25,7 @@ struct Triangle
 class VisualObject : public QOpenGLFunctions_4_1_Core {
 public:
     VisualObject();
+    VisualObject(const VisualObject& vo);
     virtual ~VisualObject();
     virtual void init();
     virtual void draw()=0;
@@ -46,6 +47,7 @@ public:
 protected:
     std::vector<Vertex> mVertices;
     std::vector<GLuint> mIndices;
+    bool mInited{false};
 
     GLuint mVAO{0};
     GLuint mVBO{0};

@@ -46,6 +46,8 @@ void XYZ::init()
     glEnableVertexAttribArray(2);
 
     glBindVertexArray(0);
+
+    mInited = true;
 }
 
 void XYZ::draw()

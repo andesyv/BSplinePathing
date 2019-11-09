@@ -15,6 +15,7 @@
 class QOpenGLContext;
 class Shader;
 class MainWindow;
+class Trophy;
 
 /// This inherits from QWindow to get access to the Qt functionality and
 /// OpenGL surface.
@@ -68,6 +69,7 @@ private:
     GLint mTextureUniform{-1};
 
     std::vector<VisualObject*> mVisualObjects;
+    std::vector<Trophy> mTrophies;
     std::vector<Vertex> mTerrainVertices;
 
     std::vector<Triangle> mTerrainTriangles;

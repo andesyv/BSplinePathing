@@ -29,6 +29,7 @@ HEADERS += \
     texture.h \
     triangle.h \
     trianglesurface.h \
+    trophy.h \
     vertex.h \
     visualobject.h \
     xyz.h
@@ -53,6 +54,7 @@ SOURCES += \
     texture.cpp \
     triangle.cpp \
     trianglesurface.cpp \
+    trophy.cpp \
     vertex.cpp \
     visualobject.cpp \
     xyz.cpp

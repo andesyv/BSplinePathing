@@ -5,10 +5,21 @@ VisualObject::VisualObject()
 {
 }
 
+VisualObject::VisualObject(const VisualObject &vo)
+    : mMatrix{vo.mMatrix}, startPos(vo.startPos),
+      mAcceleration(vo.mAcceleration), velocity(vo.velocity), colliderRadius{vo.colliderRadius},
+      mName{vo.mName}, mRenderWindow{vo.mRenderWindow}, mVertices{vo.mVertices}, mIndices{vo.mIndices}
+{
+
+}
+
 VisualObject::~VisualObject()
 {
-   glDeleteVertexArrays( 1, &mVAO );
-   glDeleteBuffers( 1, &mVBO );
+   if (mInited)
+   {
+       glDeleteVertexArrays( 1, &mVAO );
+       glDeleteBuffers( 1, &mVBO );
+   }
 }
 
 void VisualObject::init()

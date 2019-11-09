@@ -19,6 +19,7 @@
 #include "LAS/lasloader.h"
 #include "bsplinecurve.h"
 #include "npc.h"
+#include "trophy.h"
 
 RenderWindow::RenderWindow(const QSurfaceFormat &format, MainWindow *mainWindow)
     : mContext(nullptr), mInitialized(false), mMainWindow(mainWindow)
@@ -133,6 +134,23 @@ void RenderWindow::init()
     temp->init();
     mVisualObjects.push_back(temp);
 
+
+    // Make trophies
+    std::vector<gsl::vec3> positions{
+        {-10.f, 0.f, -12.f},
+        {-3.f, 0.f, -5.f},
+        {0.f, 0.f, 10.f},
+        {5.f, 0.f, 7.f},
+    };
+    mTrophies.reserve(positions.size());
+    for (const auto& pos : positions)
+    {
+        Trophy tempTrophy{};
+        tempTrophy.mMatrix.setPosition(pos.x, pos.y, pos.z);
+        mTrophies.push_back(tempTrophy);
+        mTrophies.back().init();
+    }
+
     //********************** Set up camera **********************
     mCurrentCamera = new Camera();
     mCurrentCamera->setPosition(gsl::Vector3D(-1.f, -.5f, -5.f));
@@ -191,6 +209,15 @@ void RenderWindow::render()
         glUniformMatrix4fv( pMatrixUniform0, 1, GL_TRUE, mCurrentCamera->mProjectionMatrix.constData());
         glUniformMatrix4fv( mMatrixUniform0, 1, GL_TRUE, mVisualObjects[3]->mMatrix.constData());
         mVisualObjects[3]->draw(mShaderProgram[0]);
+
+        glUseProgram(mShaderProgram[0]->getProgram());
+        glUniformMatrix4fv( vMatrixUniform0, 1, GL_TRUE, mCurrentCamera->mViewMatrix.constData());
+        glUniformMatrix4fv( pMatrixUniform0, 1, GL_TRUE, mCurrentCamera->mProjectionMatrix.constData());
+        for (auto &trophy : mTrophies)
+        {
+            glUniformMatrix4fv( mMatrixUniform0, 1, GL_TRUE, trophy.mMatrix.constData());
+            trophy.draw();
+        }
 
         glUseProgram(mShaderProgram[0]->getProgram());
         gsl::Matrix4x4 modelMat{};
