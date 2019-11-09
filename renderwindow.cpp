@@ -142,16 +142,15 @@ void RenderWindow::init()
 
     // Make trophies
     std::vector<gsl::vec3> positions{
-        {-10.f, 0.f, -12.f},
-        {-3.f, 0.f, -5.f},
-        {0.f, 0.f, 10.f},
-        {5.f, 0.f, 7.f},
+        {-18.f, 0.f, -18.f},
+        {10.f, 0.f, -9.f},
+        {-8.f, 0.f, -3.f},
+        {-12.f, 0.f, 7.f},
+        {3.f, 0.f, 12.f},
+        {18.f, 0.f, 18.f}
     };
     for (auto &pos : positions)
-    {
         pos = mapToTerrain(pos);
-        std:: cout << "pos is now: " << pos << std::endl;
-    }
 
     mTrophies.reserve(positions.size());
     for (const auto& pos : positions)
@@ -211,7 +210,7 @@ void RenderWindow::render()
 
         if (auto npc = dynamic_cast<NPC*>(mVisualObjects[3]))
         {
-            npc->patrol(deltaTime * 0.1f);
+            npc->update();
         }
 
         glUseProgram(mShaderProgram[0]->getProgram());

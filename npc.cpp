@@ -1,5 +1,6 @@
 #include "npc.h"
 #include "renderwindow.h"
+#include <chrono>
 
 NPC::NPC(BSplineCurve &&bsplinecurve, gsl::Vector3D color)
     : curve{std::move(bsplinecurve)}
@@ -30,17 +31,67 @@ void NPC::readFile(std::string filename) {
     }
 }
 
-void NPC::patrol(float deltaT)
+std::optional<NPC::NPCevents> NPC::patrol(float deltaT)
 {
     t += deltaT * dir;
-    if (0.98f <= t || t < 0.f)
-    {
+    bool endPoint = 0.98f <= t || t < 0.f;
+    if (endPoint)
         t = gsl::clamp(t, 0.f, 1.f);
-        dir = -dir;
-    }
 
     auto p = curve(t);
+    if (mRenderWindow != nullptr)
+    {
+        p = mRenderWindow->mapToTerrain(p);
+        p.y += 1.f;
+    }
     mMatrix.setPosition(p.x, p.y, p.z);
+
+    if (endPoint)
+    {
+        return NPC::ENDPOINT_ARRIVED;
+    }
+
+    return std::nullopt;
+}
+
+void NPC::update()
+{
+    const auto deltaTime = static_cast<float>(calcDeltaTime());
+
+    // std::cout << "current state: " << state << std::endl;
+
+    std::optional<NPCevents> event;
+    switch (state)
+    {
+    case SLEEP:
+        break;
+    case PATROL:
+        event = patrol(deltaTime * 0.1f);
+        break;
+    case LEARN:
+        break;
+    case CHASE:
+        break;
+    }
+
+    // Handle events (if any)
+    if (event)
+    {
+        switch (event.value())
+        {
+        case ENDPOINT_ARRIVED:
+            dir = -dir;
+            break;
+        case ITEM_TAKEN:
+            break;
+        case OBSTACLE_DETECTED:
+            break;
+        case PLAYER_DETECTED:
+            break;
+        case CHASE_ENDPOINT_ARRIVED:
+            break;
+        }
+    }
 }
 
 void NPC::draw()
@@ -115,6 +166,7 @@ void NPC::init()
     glBindVertexArray(0);
 
     mInited = true;
+    lastTime = std::chrono::system_clock::now();
 }
 
 void NPC::updatePathVisual()
@@ -126,8 +178,11 @@ void NPC::updatePathVisual()
     for (int i{0}; i < splineResolution; ++i)
     {
         auto p = curve(i * 1.f / splineResolution);
-        if (mRenderWindow != nullptr)
+        if (mapPathToTerrain && mRenderWindow != nullptr)
+        {
             p = mRenderWindow->mapToTerrain(p);
+            p.y += 0.1f;
+        }
         vertices.emplace_back(p.x, p.y, p.z, 0.f, 1.f, 0.f);
     }
 
@@ -152,4 +207,11 @@ NPC::~NPC()
 
     glDeleteBuffers(1, &NPCVBO);
     glDeleteVertexArrays(1, &splineVAO);
+}
+
+double NPC::calcDeltaTime()
+{
+    std::chrono::duration<double> duration = std::chrono::system_clock::now() - lastTime;
+    lastTime = std::chrono::system_clock::now();
+    return duration.count();
 }

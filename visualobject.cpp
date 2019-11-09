@@ -36,11 +36,6 @@ void VisualObject::move(float deltaTime)
 
 }
 
-void VisualObject::update(float time)
-{
-
-}
-
 
 std::ostream &operator<<(std::ostream &out, const Triangle &tri)
 {

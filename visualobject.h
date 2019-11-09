@@ -32,7 +32,6 @@ public:
     virtual void draw(Shader* shader);
 
     virtual void move(float deltaTime);
-    virtual void update(float time);
 
     gsl::Matrix4x4 mMatrix;
     gsl::vec3 startPos{};

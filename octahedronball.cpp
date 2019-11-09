@@ -186,11 +186,11 @@ void OctahedronBall::move(float deltaTime)
 
 }
 
-void OctahedronBall::update(float time)
-{
-    auto s = startPos + (mAcceleration * std::pow(time, 2)) / 2.f;
-    mMatrix.setPosition(s.x, s.y, s.z);
-}
+//void OctahedronBall::update(float time)
+//{
+//    auto s = startPos + (mAcceleration * std::pow(time, 2)) / 2.f;
+//    mMatrix.setPosition(s.x, s.y, s.z);
+//}
 
 gsl::vec3 OctahedronBall::getAcceleraton()
 {
