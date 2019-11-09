@@ -131,6 +131,7 @@ void RenderWindow::init()
     };
 
     temp = new NPC{std::move(curveFunc)};
+    npc = dynamic_cast<NPC*>(temp);
     temp->init();
     mVisualObjects.push_back(temp);
 
@@ -150,6 +151,8 @@ void RenderWindow::init()
         mTrophies.push_back(tempTrophy);
         mTrophies.back().init();
     }
+
+    updateTrophies();
 
     //********************** Set up camera **********************
     mCurrentCamera = new Camera();
@@ -717,7 +720,19 @@ void RenderWindow::handleInput()
         mVisualObjects[2]->mMatrix.setToIdentity();
         mVisualObjects[2]->mMatrix.setPosition(0.f, 10.f, 0.f);
     }
-        mSimulationTime -= deltaTime;
+    mSimulationTime -= deltaTime;
+}
+
+void RenderWindow::updateTrophies()
+{
+    std::vector<gsl::vec3> cs{};
+    cs.reserve(mTrophies.size());
+    std::transform(mTrophies.begin(), mTrophies.end(), std::back_inserter(cs), [](const Trophy& t)
+        {
+            return t.mMatrix.getPosition();
+        });
+    npc->curve.setCs(cs);
+    npc->updatePathVisual();
 }
 
 void RenderWindow::keyPressEvent(QKeyEvent *event)

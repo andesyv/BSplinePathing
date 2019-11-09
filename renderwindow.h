@@ -16,6 +16,7 @@ class QOpenGLContext;
 class Shader;
 class MainWindow;
 class Trophy;
+class NPC;
 
 /// This inherits from QWindow to get access to the Qt functionality and
 /// OpenGL surface.
@@ -80,6 +81,8 @@ private:
     GLuint spline;
     int splineResolution = 50.f;
 
+    NPC *npc{nullptr};
+
     Camera *mCurrentCamera{nullptr};
 
     bool mWireframe{false};
@@ -106,6 +109,8 @@ private:
     void startOpenGLDebugger();
 
     void handleInput();
+
+    void updateTrophies();
 
 protected:
     //The QWindow that we inherit from has these functions to capture
