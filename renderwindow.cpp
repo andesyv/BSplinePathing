@@ -386,9 +386,7 @@ Triangle *RenderWindow::getTriangle(gsl::vec3 pos)
     unsigned int lastIndex = std::numeric_limits<unsigned int>::max();
     while (!(0 <= bCoords.x && 0 <= bCoords.y && 0 <= bCoords.z))
     {
-        unsigned int lowestIndex{0};
-        lowestIndex = (bCoords.y < bCoords.x) ? 1 : lowestIndex;
-        lowestIndex = (bCoords.z < bCoords.x) ? 2 : lowestIndex;
+        unsigned int lowestIndex = (bCoords.x < bCoords.y) ? ((bCoords.x < bCoords.z) ? 0 : 2) : ((bCoords.y < bCoords.z) ? 1 : 2);
 
         if (t->neighbour[lowestIndex] < 0)
             return nullptr;
@@ -432,9 +430,7 @@ gsl::vec3 RenderWindow::mapToTerrain(gsl::vec3 pos)
     unsigned int lastIndex = std::numeric_limits<unsigned int>::max();
     while (!(0 <= bCoords.x && 0 <= bCoords.y && 0 <= bCoords.z))
     {
-        unsigned int lowestIndex{0};
-        lowestIndex = (bCoords.y < bCoords.x) ? 1 : lowestIndex;
-        lowestIndex = (bCoords.z < bCoords.x) ? 2 : lowestIndex;
+        unsigned int lowestIndex = (bCoords.x < bCoords.y) ? ((bCoords.x < bCoords.z) ? 0 : 2) : ((bCoords.y < bCoords.z) ? 1 : 2);
 
         if (t->neighbour[lowestIndex] < 0)
             return {};
