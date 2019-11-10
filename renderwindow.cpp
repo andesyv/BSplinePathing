@@ -788,7 +788,8 @@ void RenderWindow::updateTrophies()
             return t.mMatrix.getPosition();
         });
     npc->curve.setCs(cs);
-    npc->updatePathVisual();
+    npc->addEvent(NPC::ITEM_TAKEN);
+    // npc->updatePathVisual();
 }
 
 void RenderWindow::keyPressEvent(QKeyEvent *event)

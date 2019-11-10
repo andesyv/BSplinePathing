@@ -3,7 +3,7 @@
 #include <chrono>
 
 NPC::NPC(BSplineCurve &&bsplinecurve, gsl::Vector3D color)
-    : curve{std::move(bsplinecurve)}
+    : curve{std::move(bsplinecurve)}, rememberedCurve{curve}
 {
     mMatrix.setToIdentity();
 }
@@ -38,7 +38,7 @@ std::optional<NPC::NPCevents> NPC::patrol(float deltaT)
     if (endPoint)
         t = gsl::clamp(t, 0.f, 1.f);
 
-    auto p = curve(t);
+    auto p = rememberedCurve(t);
     if (mRenderWindow != nullptr)
     {
         p = mRenderWindow->mapToTerrain(p);
@@ -60,6 +60,9 @@ void NPC::update()
 
     // std::cout << "current state: " << state << std::endl;
 
+    // Handle events (if any)
+    handleEvents();
+
     std::optional<NPCevents> event;
     switch (state)
     {
@@ -67,30 +70,48 @@ void NPC::update()
         break;
     case PATROL:
         event = patrol(deltaTime * 0.1f);
+        if (event)
+            eventQueue.push(event.value());
         break;
     case LEARN:
+        dir = -dir;
+        if (updatePath)
+        {
+            rememberedCurve = curve;
+            updatePathVisual();
+            updatePath = false;
+        }
+        state = PATROL;
+        // std::cout << "learned!" << std::endl;
         break;
     case CHASE:
         break;
     }
+}
 
-    // Handle events (if any)
-    if (event)
+void NPC::handleEvents()
+{
+    while (!eventQueue.empty())
     {
-        switch (event.value())
+        auto event = eventQueue.front();
+        switch (event)
         {
         case ENDPOINT_ARRIVED:
-            dir = -dir;
+            state = LEARN;
             break;
         case ITEM_TAKEN:
+            updatePath = true;
             break;
         case OBSTACLE_DETECTED:
             break;
         case PLAYER_DETECTED:
+            state = CHASE;
             break;
         case CHASE_ENDPOINT_ARRIVED:
+            state = PATROL;
             break;
         }
+        eventQueue.pop();
     }
 }
 

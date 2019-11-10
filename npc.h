@@ -6,6 +6,7 @@
 #include "bsplinecurve.h"
 #include <chrono>
 #include <optional>
+#include <queue>
 
 class BSplineCurve;
 
@@ -23,11 +24,13 @@ public:
 
     std::optional<NPCevents> patrol(float deltaT);
     void update();
+    void handleEvents();
 
     bool debugLine = true;
     void draw() override;
     void draw(Shader *shader) override;
     void init() override;
+    void addEvent(NPCevents event) { eventQueue.push(event); }
 
     BSplineCurve curve;
 
@@ -35,11 +38,14 @@ public:
 
     ~NPC() override;
 private:
-    NPCstates state{PATROL};
+    NPCstates state{LEARN};
+    std::queue<NPCevents> eventQueue{};
+    bool updatePath = true;
 
     int splineResolution = 50.f;
     float t{0};
     int dir{1};
+    BSplineCurve rememberedCurve;
     bool mapPathToTerrain = true;
     std::chrono::system_clock::time_point lastTime{std::chrono::system_clock::now()};
     double calcDeltaTime();
