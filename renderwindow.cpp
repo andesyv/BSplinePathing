@@ -168,7 +168,9 @@ void RenderWindow::init()
 
     //********************** Set up camera **********************
     mCurrentCamera = new Camera();
-    mCurrentCamera->setPosition(gsl::Vector3D(-1.f, -.5f, -5.f));
+    mCurrentCamera->setPosition(gsl::Vector3D(25.f, -15.f, -25.f));
+    mCurrentCamera->pitch(30.f);
+    mCurrentCamera->yaw(45.f);
 }
 
 ///Called each frame - doing the rendering
@@ -176,6 +178,16 @@ void RenderWindow::render()
 {
     //input
     handleInput();
+
+    for (auto it = mTrophies.begin(); it != mTrophies.end(); ++it)
+    {
+        if (SphereSphere(it->mMatrix.getPosition(), player->mMatrix.getPosition()))
+        {
+            mTrophies.erase(it);
+            updateTrophies();
+            break;
+        }
+    }
 
     mCurrentCamera->update();
 

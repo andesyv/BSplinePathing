@@ -15,11 +15,11 @@ VisualObject::VisualObject(const VisualObject &vo)
 
 VisualObject::~VisualObject()
 {
-   if (mInited)
-   {
-       glDeleteVertexArrays( 1, &mVAO );
-       glDeleteBuffers( 1, &mVBO );
-   }
+    if (mInited)
+    {
+        glDeleteVertexArrays( 1, &mVAO );
+        glDeleteBuffers( 1, &mVBO );
+    }
 }
 
 void VisualObject::init()
@@ -36,16 +36,31 @@ void VisualObject::move(float deltaTime)
 
 }
 
+VisualObject &VisualObject::operator=(const VisualObject &v)
+{
+    mMatrix = v.mMatrix;
+    startPos = v.startPos;
+    mAcceleration = v.mAcceleration;
+    velocity = v.velocity;
+    colliderRadius = v.colliderRadius;
+    mName = v.mName;
+    mRenderWindow = v.mRenderWindow;
+    mVertices = v.mVertices;
+    mIndices = v.mIndices;
+
+    return *this;
+}
+
 
 std::ostream &operator<<(std::ostream &out, const Triangle &tri)
 {
     return out << "("
-        << tri.index[0] << ", "
-        << tri.index[1] << ", "
-        << tri.index[2] << ", "
-        << tri.neighbour[0] << ", "
-        << tri.neighbour[1] << ", "
-        << tri.neighbour[2] << ")";
+               << tri.index[0] << ", "
+               << tri.index[1] << ", "
+               << tri.index[2] << ", "
+               << tri.neighbour[0] << ", "
+               << tri.neighbour[1] << ", "
+               << tri.neighbour[2] << ")";
 }
 
 std::istream &operator>>(std::istream &in, Triangle &tri)

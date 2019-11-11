@@ -21,6 +21,7 @@ class OctahedronBall;
 
 class Sphere : public std::pair<gsl::vec3, float>
 {
+public:
     Sphere(const gsl::vec3& pos, float radius = 1.f)
         : std::pair<gsl::vec3, float>{pos, radius}
     {}
@@ -49,7 +50,7 @@ public:
 
 
     void moveBall(float deltaTime);
-    bool SphereSphere(Sphere a, Sphere b);
+    static bool SphereSphere(Sphere a, Sphere b);
 
     Triangle* getTriangle(gsl::vec3 pos);
     gsl::vec3 mapToTerrain(gsl::vec3 pos);

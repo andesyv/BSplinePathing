@@ -33,6 +33,8 @@ public:
 
     virtual void move(float deltaTime);
 
+    VisualObject& operator=(const VisualObject& v);
+
     gsl::Matrix4x4 mMatrix;
     gsl::vec3 startPos{};
     gsl::vec3 mAcceleration{};
