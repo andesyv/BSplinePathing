@@ -18,6 +18,7 @@ class MainWindow;
 class Trophy;
 class NPC;
 class OctahedronBall;
+class Player;
 
 class Sphere : public std::pair<gsl::vec3, float>
 {
@@ -96,7 +97,7 @@ private:
     int splineResolution = 50.f;
 
     NPC *npc{nullptr};
-    VisualObject* player{nullptr};
+    Player* player{nullptr};
 
     Camera *mCurrentCamera{nullptr};
 

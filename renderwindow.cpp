@@ -20,6 +20,7 @@
 #include "bsplinecurve.h"
 #include "npc.h"
 #include "trophy.h"
+#include "player.h"
 
 RenderWindow::RenderWindow(const QSurfaceFormat &format, MainWindow *mainWindow)
     : mContext(nullptr), mInitialized(false), mMainWindow(mainWindow)
@@ -115,7 +116,8 @@ void RenderWindow::init()
     //********************** Terrain Data **************************
     initTerrain();
 
-    temp = new OctahedronBall{3};
+    temp = new Player{};
+    player = static_cast<Player*>(temp);
     temp->init();
     auto pos = mapToTerrain(gsl::vec3{3.f, 10.f, 2.f});
     temp->mMatrix.setPosition(pos.x, pos.y, pos.z);
@@ -123,7 +125,6 @@ void RenderWindow::init()
     temp->startPos = temp->mMatrix.getPosition();
     temp->mAcceleration = gsl::vec3{0.f, -9.81f, 0.f};
     mVisualObjects.push_back(temp);
-    player = temp;
 
 
     BSplineCurve curveFunc{
@@ -799,20 +800,23 @@ void RenderWindow::handleInput()
     }
     else if (player != nullptr)
     {
-        auto pos = player->mMatrix.getPosition();
+        gsl::vec3 dir{0.f, 0.f, 0.f};
         float movementSpeed = 10.f;
         if (mInput.W)
-            pos.z -= deltaTime * movementSpeed;
+            dir.z -= deltaTime * movementSpeed;
         if (mInput.S)
-            pos.z += deltaTime * movementSpeed;
+            dir.z += deltaTime * movementSpeed;
         if (mInput.D)
-            pos.x += deltaTime * movementSpeed;
+            dir.x += deltaTime * movementSpeed;
         if (mInput.A)
-            pos.x -= deltaTime * movementSpeed;
+            dir.x -= deltaTime * movementSpeed;
 
 
-        if (player->mMatrix.getPosition() != pos) {
+        if (dir != gsl::vec3{0.f, 0.f, 0.f}) {
+            auto pos = player->mMatrix.getPosition() + dir;
             pos = mapToTerrain(pos);
+            player->mMatrix.setToIdentity();
+            player->mMatrix.setRotationToVector(dir.normalized());
             player->mMatrix.setPosition(pos.x, pos.y + 1.f, pos.z);
         }
     }

@@ -23,7 +23,9 @@ HEADERS += \
     input.h \
     mainwindow.h \
     npc.h \
+    objmesh.h \
     octahedronball.h \
+    player.h \
     renderwindow.h \
     shader.h \
     texture.h \
@@ -48,7 +50,9 @@ SOURCES += \
     main.cpp \
     mainwindow.cpp \
     npc.cpp \
+    objmesh.cpp \
     octahedronball.cpp \
+    player.cpp \
     renderwindow.cpp \
     shader.cpp \
     texture.cpp \
