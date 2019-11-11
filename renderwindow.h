@@ -17,6 +17,14 @@ class Shader;
 class MainWindow;
 class Trophy;
 class NPC;
+class OctahedronBall;
+
+class Sphere : public std::pair<gsl::vec3, float>
+{
+    Sphere(const gsl::vec3& pos, float radius = 1.f)
+        : std::pair<gsl::vec3, float>{pos, radius}
+    {}
+};
 
 /// This inherits from QWindow to get access to the Qt functionality and
 /// OpenGL surface.
@@ -41,6 +49,7 @@ public:
 
 
     void moveBall(float deltaTime);
+    bool SphereSphere(Sphere a, Sphere b);
 
     Triangle* getTriangle(gsl::vec3 pos);
     gsl::vec3 mapToTerrain(gsl::vec3 pos);
@@ -86,6 +95,7 @@ private:
     int splineResolution = 50.f;
 
     NPC *npc{nullptr};
+    VisualObject* player{nullptr};
 
     Camera *mCurrentCamera{nullptr};
 

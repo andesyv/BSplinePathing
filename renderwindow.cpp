@@ -117,10 +117,13 @@ void RenderWindow::init()
 
     temp = new OctahedronBall{3};
     temp->init();
-    temp->mMatrix.setPosition(0, 10.f, 0);
+    auto pos = mapToTerrain(gsl::vec3{3.f, 10.f, 2.f});
+    temp->mMatrix.setPosition(pos.x, pos.y, pos.z);
+
     temp->startPos = temp->mMatrix.getPosition();
     temp->mAcceleration = gsl::vec3{0.f, -9.81f, 0.f};
     mVisualObjects.push_back(temp);
+    player = temp;
 
 
     BSplineCurve curveFunc{
@@ -176,7 +179,7 @@ void RenderWindow::render()
 
     mCurrentCamera->update();
 
-    const float deltaTime = mTimeStart.nsecsElapsed() / 1000000000.f;
+    // const float deltaTime = mTimeStart.nsecsElapsed() / 1000000000.f;
 
     mTimeStart.restart(); //restart FPS clock
     mContext->makeCurrent(this); //must be called every frame (every time mContext->swapBuffers is called)
@@ -343,6 +346,12 @@ void RenderWindow::moveBall(float deltaTime)
 
     ball.mMatrix.setPosition(pos.x, pos.y, pos.z);
     // std::cout << "velocity: " << ball.velocity << std::endl;
+}
+
+bool RenderWindow::SphereSphere(Sphere a, Sphere b)
+{
+    auto dist = b.first - a.first;
+    return (dist * dist < static_cast<float>(std::pow(a.second + b.second, 2)));
 }
 
 std::pair<bool, gsl::vec3> RenderWindow::isColliding(VisualObject* ball, float ballRadius)
@@ -767,6 +776,25 @@ void RenderWindow::handleInput()
             mCurrentCamera->updateHeigth(-mCameraSpeed);
 
         // mSimulationTime += deltaTime;
+    }
+    else if (player != nullptr)
+    {
+        auto pos = player->mMatrix.getPosition();
+        float movementSpeed = 10.f;
+        if (mInput.W)
+            pos.z -= deltaTime * movementSpeed;
+        if (mInput.S)
+            pos.z += deltaTime * movementSpeed;
+        if (mInput.D)
+            pos.x += deltaTime * movementSpeed;
+        if (mInput.A)
+            pos.x -= deltaTime * movementSpeed;
+
+
+        if (player->mMatrix.getPosition() != pos) {
+            pos = mapToTerrain(pos);
+            player->mMatrix.setPosition(pos.x, pos.y + 1.f, pos.z);
+        }
     }
 
     if (mInput.LMB)

@@ -4,13 +4,14 @@
 #include "visualobject.h"
 #include "gsl_math.h"
 #include "bsplinecurve.h"
+#include "octahedronball.h"
 #include <chrono>
 #include <optional>
 #include <queue>
 
 class BSplineCurve;
 
-class NPC : public VisualObject
+class NPC : public OctahedronBall
 {
 public:
     enum NPCstates {SLEEP, PATROL, LEARN, CHASE};
@@ -50,10 +51,8 @@ private:
     std::chrono::system_clock::time_point lastTime{std::chrono::system_clock::now()};
     double calcDeltaTime();
 
-    GLuint NPCVAO;
     GLuint splineVAO;
-
-    GLuint NPCVBO, splineVBO;
+    GLuint splineVBO;
 };
 
 #endif // NPC_H

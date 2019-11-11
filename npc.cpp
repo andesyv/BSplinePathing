@@ -3,7 +3,7 @@
 #include <chrono>
 
 NPC::NPC(BSplineCurve &&bsplinecurve, gsl::Vector3D color)
-    : curve{std::move(bsplinecurve)}, rememberedCurve{curve}
+    : OctahedronBall{2}, curve{std::move(bsplinecurve)}, rememberedCurve{curve}
 {
     mMatrix.setToIdentity();
 }
@@ -125,7 +125,7 @@ void NPC::draw()
         glDrawArrays(GL_POINTS, splineResolution, curve.getCs().size());
     }
 
-    glBindVertexArray(NPCVAO);
+    glBindVertexArray(mVAO);
     glDrawArrays(GL_TRIANGLES, 0, mVertices.size());
 }
 
@@ -143,7 +143,7 @@ void NPC::draw(Shader *shader)
     }
 
     glUniformMatrix4fv(glGetUniformLocation(shader->getProgram(), "mMatrix"), 1, GL_TRUE, mMatrix.constData());
-    glBindVertexArray(NPCVAO);
+    glBindVertexArray(mVAO);
     glDrawArrays(GL_TRIANGLES, 0, mVertices.size());
 }
 
@@ -168,21 +168,7 @@ void NPC::init()
 
 
     // NPC
-    readFile("../BSplinePathing/Assets/ball.txt");
-
-    glGenVertexArrays(1, &NPCVAO);
-    glBindVertexArray(NPCVAO);
-
-    glGenBuffers(1, &NPCVBO);
-    glBindBuffer(GL_ARRAY_BUFFER, NPCVBO);
-    glBufferData(GL_ARRAY_BUFFER, mVertices.size() * sizeof (Vertex), mVertices.data(), GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(Vertex), (GLvoid*)(0));
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, false, sizeof(Vertex), (GLvoid*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(2, 2, GL_FLOAT, false, sizeof(Vertex), (GLvoid*)(6 * sizeof(float)));
-    glEnableVertexAttribArray(2);
+    OctahedronBall::init();
 
     glBindVertexArray(0);
 
@@ -224,9 +210,6 @@ void NPC::updatePathVisual()
 NPC::~NPC()
 {
     glDeleteBuffers(1, &splineVBO);
-    glDeleteVertexArrays(1, &splineVAO);
-
-    glDeleteBuffers(1, &NPCVBO);
     glDeleteVertexArrays(1, &splineVAO);
 }
 

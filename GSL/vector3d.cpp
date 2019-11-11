@@ -105,7 +105,17 @@ namespace gsl
 
     Vector3D Vector3D::operator^(const Vector3D &rhs) const
         {
-            return {y * rhs.getZ() - z * rhs.getY(), z * rhs.getX() - x * rhs.getZ(), x * rhs.getY() - y * rhs.getX()};
+        return {y * rhs.getZ() - z * rhs.getY(), z * rhs.getX() - x * rhs.getZ(), x * rhs.getY() - y * rhs.getX()};
+    }
+
+    bool Vector3D::operator==(const Vector3D &rhs) const
+    {
+        return gsl::nearEqual(x, rhs.x) && gsl::nearEqual(y, rhs.y) && gsl::nearEqual(z, rhs.z);
+    }
+
+    bool Vector3D::operator!=(const Vector3D &rhs) const
+    {
+        return !(*this == rhs);
     }
 
 
