@@ -112,6 +112,7 @@ private:
 
     QTimer *mRenderTimer{nullptr};  //timer that drives the gameloop
     QElapsedTimer mTimeStart;       //time variable that reads the actual FPS
+    float mTotalTime{0.f};
 
     float mAspectratio{1.f};
 

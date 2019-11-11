@@ -176,6 +176,8 @@ void RenderWindow::init()
 ///Called each frame - doing the rendering
 void RenderWindow::render()
 {
+    mTotalTime += mTimeStart.nsecsElapsed() / 1000000000.f;
+
     //input
     handleInput();
 
@@ -189,9 +191,15 @@ void RenderWindow::render()
         }
     }
 
-    mCurrentCamera->update();
+    if (mTotalTime > 5.f)
+    {
+        if (SphereSphere(npc->mMatrix.getPosition(), player->mMatrix.getPosition()))
+        {
+            mMainWindow->close();
+        }
+    }
 
-    // const float deltaTime = mTimeStart.nsecsElapsed() / 1000000000.f;
+    mCurrentCamera->update();
 
     mTimeStart.restart(); //restart FPS clock
     mContext->makeCurrent(this); //must be called every frame (every time mContext->swapBuffers is called)
